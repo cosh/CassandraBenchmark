@@ -48,10 +48,11 @@ public class BenchmarkController {
     public BenchmarkResult testAllNodes(
             final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
             final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
-            final @RequestParam(required = false, defaultValue = "100000") long numberOfRequests,
+            final @RequestParam(required = false, defaultValue = "100000") long numberOfRows,
+            final @RequestParam(required = false, defaultValue = "20") int wideRowCount,
             final @RequestParam(required = false, defaultValue = "1000") int batchSize)
     {
-        return service.executeBenchmark(seedNode, clusterName, numberOfRequests, batchSize);
+        return service.executeBenchmark(seedNode, clusterName, numberOfRows, wideRowCount, batchSize);
     }
 
     @RequestMapping(value = "/schema/create", method = RequestMethod.PUT)
