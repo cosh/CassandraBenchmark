@@ -40,16 +40,26 @@ public class BenchmarkController {
 	@RequestMapping
     public String testOnAllNodes()
     {
-        return "this is a test";
+        return "This service is working fine";
     }
 
 
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public BenchmarkResult testAllNodes(
-            final @RequestParam(required = true, defaultValue = "127.0.0.1") String seedNode,
-            final @RequestParam(required = true, defaultValue = "100000") long numberOfRequests,
+            final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
+            final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
+            final @RequestParam(required = false, defaultValue = "100000") long numberOfRequests,
             final @RequestParam(required = false, defaultValue = "1000") int batchSize)
     {
-        return service.executeBenchmark(seedNode, numberOfRequests, batchSize);
+        return service.executeBenchmark(seedNode, clusterName, numberOfRequests, batchSize);
+    }
+
+    @RequestMapping(value = "/schema/create", method = RequestMethod.PUT)
+    public BenchmarkResult createSchema(
+            final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
+            final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
+            final @RequestParam(required = false, defaultValue = "3") int rf)
+    {
+        return service.createSchema(seedNode, clusterName, rf);
     }
 }

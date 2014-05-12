@@ -9,6 +9,7 @@
 	<artifactId>cassandra-benchmark</artifactId>
 	<name>Cassandra benchmark</name>
 	<description>Cassandra benchmark that is using the datastax driver</description>
+    <version>0.0.1-SNAPSHOT</version>
 	<properties>
 		<main.basedir>${basedir}/../..</main.basedir>
 	</properties>
@@ -30,6 +31,16 @@
   			<artifactId>cassandra-driver-core</artifactId>
   			<version>2.0.2</version>
 		</dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.0-rc1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.0-rc1</version>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>
