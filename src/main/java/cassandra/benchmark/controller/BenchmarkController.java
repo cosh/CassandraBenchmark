@@ -17,14 +17,17 @@
 package cassandra.benchmark.controller;
 
 import cassandra.benchmark.service.CassandraBenchmarkService;
+import cassandra.benchmark.transfer.BenchmarkResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/benchmark/cassandra")
+@RequestMapping("/")
 public class BenchmarkController {
 
     private final CassandraBenchmarkService service;
@@ -40,11 +43,13 @@ public class BenchmarkController {
         return "this is a test";
     }
 
-    /*
-    @RequestMapping("/{ip}")
-    public String testOnASpecificNode()
+
+    @RequestMapping(value = "/all", method = RequestMethod.GET)
+    public BenchmarkResult testAllNodes(
+            final @RequestParam(required = true, defaultValue = "127.0.0.1") String seedNode,
+            final @RequestParam(required = true, defaultValue = "100000") long numberOfRequests,
+            final @RequestParam(required = false, defaultValue = "1000") int batchSize)
     {
-        return "";
+        return service.executeBenchmark(seedNode, numberOfRequests, batchSize);
     }
-    */
 }
