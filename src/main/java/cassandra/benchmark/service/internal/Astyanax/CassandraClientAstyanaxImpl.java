@@ -1,5 +1,6 @@
 package cassandra.benchmark.service.internal.Astyanax;
 
+import cassandra.benchmark.service.internal.Astyanax.model.IdentityBucketRK;
 import cassandra.benchmark.service.internal.CassandraClient;
 import cassandra.benchmark.service.internal.Constants;
 import com.google.common.collect.ImmutableMap;
@@ -13,7 +14,8 @@ import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.SmaLatencyScoreStrategyImpl;
 import com.netflix.astyanax.ddl.KeyspaceDefinition;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
-import com.netflix.astyanax.serializers.StringSerializer;
+import com.netflix.astyanax.serializers.AnnotatedCompositeSerializer;
+import com.netflix.astyanax.serializers.LongSerializer;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +50,9 @@ public class CassandraClientAstyanaxImpl implements CassandraClient{
     private int port = 9160;
     private int connectTimeout = ConnectionPoolConfigurationImpl.DEFAULT_CONNECT_TIMEOUT;
 
+    private final static AnnotatedCompositeSerializer<IdentityBucketRK> identityBucketSerializer = new AnnotatedCompositeSerializer<IdentityBucketRK>(
+            IdentityBucketRK.class);
+
     @Override
     public long createKeyspace(int replicationFactor) {
         long startTime = System.nanoTime();
@@ -59,17 +64,18 @@ public class CassandraClientAstyanaxImpl implements CassandraClient{
     public long createTable() {
         long startTime = System.nanoTime();
 
-        com.netflix.astyanax.model.ColumnFamily<String, String> model =
-                new com.netflix.astyanax.model.ColumnFamily<String, String>(
+
+        com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long> model =
+                new com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long>(
                         Constants.tableName,
-                        new StringSerializer(),
-                        new StringSerializer());
+                        identityBucketSerializer,
+                        new LongSerializer());
 
         try {
             keyspace.createColumnFamily(model, ImmutableMap.<String, Object>builder()
-                    .put("default_validation_class", "UTF8Type")
-                    .put("key_validation_class", "UTF8Type")
-                    .put("comparator_type", "CompositeType(UTF8Type, LongType)")
+                    .put("default_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.DoubleType)")
+                    .put("key_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.LongType)")
+                    .put("comparator_type", "LongType")
                     .build());
         } catch (ConnectionException e) {
             e.printStackTrace();
