@@ -87,7 +87,7 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
             client.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
     }
 
     private List<Mutation> generateObjects(final Random prng, int batchSize, int wideRowCount) {
@@ -138,7 +138,7 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
             logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
 
             long measure2 = client.createTable();
-            logger.debug("Created the table {0} in keyspace {1}.", Constants.tableName, Constants.keyspaceName);
+            logger.debug("Created the table {0} in keyspace {1}.", Constants.tableNameCQL, Constants.keyspaceName);
 
             long endTime = System.nanoTime();
 
@@ -153,7 +153,7 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
             client.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
     }
 
     private CassandraClient getClient(CassandraClientType clientEnum) {

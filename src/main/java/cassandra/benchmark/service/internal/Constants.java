@@ -5,6 +5,7 @@ package cassandra.benchmark.service.internal;
  */
 public class Constants {
 
-    public static final String keyspaceName = "cassandraBenchmark";
-    public static final String tableName = "wideRowTable";
+    public static final String keyspaceName = "cassandrabenchmark";
+    public static final String tableNameCQL = "cqltable";
+    public static final String tableNameThrift = "thrifttable";
 }

@@ -24,4 +24,12 @@ public class IdentityBucketRK {
     {
 
     }
+
+    public String getIdentity() {
+        return identity;
+    }
+
+    public Long getBucket() {
+        return bucket;
+    }
 }

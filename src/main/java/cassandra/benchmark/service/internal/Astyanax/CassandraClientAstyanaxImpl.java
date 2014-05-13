@@ -24,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created by cosh on 13.05.14.
@@ -65,7 +64,7 @@ public class CassandraClientAstyanaxImpl implements CassandraClient{
 
     private static final com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long> model =
             new com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long>(
-                    Constants.tableName,
+                    Constants.tableNameThrift,
                     identityBucketSerializer,
                     new LongSerializer());
 

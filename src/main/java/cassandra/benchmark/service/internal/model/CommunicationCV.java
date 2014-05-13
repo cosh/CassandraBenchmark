@@ -14,7 +14,7 @@ public class CommunicationCV {
     String bparty;
 
     @Component(ordinal = 2)
-    private Double duration;
+    Double duration;
 
     public CommunicationCV(final String aParty, final String bParty, final Double duration)
     {
@@ -27,5 +27,17 @@ public class CommunicationCV {
     public CommunicationCV()
     {
 
+    }
+
+    public String getAparty() {
+        return aparty;
+    }
+
+    public String getBparty() {
+        return bparty;
+    }
+
+    public Double getDuration() {
+        return duration;
     }
 }

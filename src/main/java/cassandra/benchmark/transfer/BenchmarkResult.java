@@ -5,7 +5,8 @@ package cassandra.benchmark.transfer;
  */
 public class BenchmarkResult {
 
-    private final long total;
+    private final long totalOps;
+    private final long totalKeys;
     private final double interval_op_rate;
     private final double interval_key_rate;
     private final double meanlatency;
@@ -14,8 +15,9 @@ public class BenchmarkResult {
     private final double ninetyNineTh;
     private final double elapsed;
 
-    public BenchmarkResult(long total, double interval_op_rate, double interval_key_rate, double meanlatency, double medianlatency, double ninetyFiveTh, double ninetyNineTh, double elapsed) {
-        this.total = total;
+    public BenchmarkResult(long totalOps, long totalKeys, double interval_op_rate, double interval_key_rate, double meanlatency, double medianlatency, double ninetyFiveTh, double ninetyNineTh, double elapsed) {
+        this.totalOps = totalOps;
+        this.totalKeys = totalKeys;
         this.interval_op_rate = interval_op_rate;
         this.interval_key_rate = interval_key_rate;
         this.meanlatency = meanlatency;
@@ -25,8 +27,8 @@ public class BenchmarkResult {
         this.elapsed = elapsed;
     }
 
-    public long getTotal() {
-        return total;
+    public long getTotalOps() {
+        return totalOps;
     }
 
     public double getInterval_op_rate() {
@@ -40,6 +42,7 @@ public class BenchmarkResult {
     public double getMeanlatency() {
         return meanlatency;
     }
+
     public double getMedianlatency() {
         return medianlatency;
     }
@@ -54,5 +57,9 @@ public class BenchmarkResult {
 
     public double getElapsed() {
         return elapsed;
+    }
+
+    public long getTotalKeys() {
+        return totalKeys;
     }
 }

@@ -2,12 +2,8 @@ package cassandra.benchmark.service.internal.Datastax;
 
 import cassandra.benchmark.service.internal.CassandraClient;
 import cassandra.benchmark.service.internal.Constants;
-import cassandra.benchmark.service.internal.SampleOfLongs;
-import cassandra.benchmark.service.internal.TimingInterval;
 import cassandra.benchmark.service.internal.model.Mutation;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,10 +30,10 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
     @Override
     public long createTable() {
         return executeStatement(session,
-                "CREATE TABLE IF NOT EXISTS " + Constants.keyspaceName + " ." + Constants.tableName + " (" +
+                "CREATE TABLE IF NOT EXISTS " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
                         "identity text," +
                         "timeBucket int," +
-                        "time timeuuid," +
+                        "time bigint," +
                         "aparty text," +
                         "bparty text," +
                         "duration float," +
@@ -59,8 +55,41 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
     }
 
     @Override
-    public long executeBatch(final List<Mutation> mutation) {
-        return 0;
+    public long executeBatch(final List<Mutation> mutations) {
+        long startTime = System.nanoTime();
+
+        BatchStatement bs = new BatchStatement();
+
+        for (Mutation aMutation : mutations)
+        {
+            SimpleStatement statement = createInsertStatement(aMutation);
+            bs.add(statement);
+        }
+
+        session.execute(bs);
+
+        return System.nanoTime() - startTime;
+    }
+
+    private SimpleStatement createInsertStatement(Mutation mutation) {
+
+        String insertString = "INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
+                "identity," +
+                "timeBucket," +
+                "time," +
+                "aparty," +
+                "bparty," +
+                "duration ) " +
+                "VALUES (" +
+                "'" + mutation.getIdentity().getIdentity()+ "'" + ","+
+                mutation.getIdentity().getBucket() + ","+
+                mutation.getTimeStamp() + ","+
+                "'" + mutation.getCommunication().getAparty()+ "'" + ","+
+                "'" + mutation.getCommunication().getBparty()+ "'" + ","+
+                mutation.getCommunication().getDuration()+
+                ");";
+
+        return new SimpleStatement(insertString);
     }
 
     public Cluster connect(final String node, final String clusterName) {
