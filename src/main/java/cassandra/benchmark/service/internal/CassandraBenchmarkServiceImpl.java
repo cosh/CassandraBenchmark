@@ -4,11 +4,16 @@ import cassandra.benchmark.service.CassandraBenchmarkService;
 import cassandra.benchmark.service.CassandraClientType;
 import cassandra.benchmark.service.internal.Astyanax.CassandraClientAstyanaxImpl;
 import cassandra.benchmark.service.internal.Datastax.CassandraClientDatastaxImpl;
+import cassandra.benchmark.service.internal.model.CommunicationCV;
+import cassandra.benchmark.service.internal.model.IdentityBucketRK;
+import cassandra.benchmark.service.internal.model.Mutation;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Created by cosh on 12.05.14.
@@ -21,8 +26,71 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
     private final static CassandraClientDatastaxImpl datastax = new CassandraClientDatastaxImpl();
 
     @Override
-    public BenchmarkResult executeBenchmark(final CassandraClientType client, final String seedNode, final String clusterName, final long numberOfRows, final int wideRowCount, final int batchSize) {
-        return new BenchmarkResult(1, 2.3, 4.5, 6.7, 8.9, 9.10, 9.55, 11.12);
+    public BenchmarkResult executeBenchmark(final CassandraClientType clientType,
+                                            final String seedNode,
+                                            final String clusterName,
+                                            final long numberOfRows,
+                                            final int wideRowCount,
+                                            final int batchSize) {
+        CassandraClient client = getClient(clientType);
+
+        client.initialize(seedNode, clusterName);
+
+        long startTime = System.nanoTime();
+        TimingInterval ti = new TimingInterval(startTime);
+
+        try {
+
+            final int numberOfBatches = getNumberOfBatches(numberOfRows, batchSize);
+            final long[] measures = new long[numberOfBatches];
+            final Random prng = new Random();
+
+            for (int i = 0; i < numberOfBatches; i++) {
+                measures[i] = client.executeBatch(generateObjects(prng, batchSize, wideRowCount));
+            }
+
+            long endTime = System.nanoTime();
+
+            SampleOfLongs measurements = new SampleOfLongs(measures, 1);
+
+            ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, numberOfBatches * batchSize * wideRowCount, getTotal(measures), numberOfBatches, measurements);
+        }
+        finally {
+            client.teardown();
+        }
+
+        return new BenchmarkResult(ti.operationCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
+    }
+
+    private List<Mutation> generateObjects(final Random prng, int batchSize, int wideRowCount) {
+        List<Mutation> mutations = new ArrayList<Mutation>();
+
+        for (int i = 0; i < batchSize; i++) {
+
+            IdentityBucketRK identity = new IdentityBucketRK(createIdentiy(i, prng), new Long(i));
+
+            for (int j = 0; j < wideRowCount; j++) {
+                mutations.add(generateMutation(prng, identity, j));
+            }
+        }
+
+        return mutations;
+    }
+
+    private Mutation generateMutation(final Random prng, final IdentityBucketRK row, int column) {
+
+        Long timestamp = new Long(column);
+        CommunicationCV communication = new CommunicationCV("aPartyName", "bPartyName", prng.nextDouble());
+
+        return new Mutation(row, timestamp, communication);
+    }
+
+    private String createIdentiy(int row, Random prng) {
+        return String.format("identity%s-%d", row, prng.nextInt(100));
+    }
+
+    private int getNumberOfBatches(long numberOfRows, final int batchSize) {
+        return (int) (numberOfRows / batchSize);
     }
 
     @Override

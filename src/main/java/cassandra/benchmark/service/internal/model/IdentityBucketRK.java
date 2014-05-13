@@ -1,4 +1,4 @@
-package cassandra.benchmark.service.internal.Astyanax.model;
+package cassandra.benchmark.service.internal.model;
 
 import com.netflix.astyanax.annotations.Component;
 

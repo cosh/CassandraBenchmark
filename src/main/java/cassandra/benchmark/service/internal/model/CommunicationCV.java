@@ -1,4 +1,4 @@
-package cassandra.benchmark.service.internal.Astyanax.model;
+package cassandra.benchmark.service.internal.model;
 
 import com.netflix.astyanax.annotations.Component;
 
@@ -18,8 +18,8 @@ public class CommunicationCV {
 
     public CommunicationCV(final String aParty, final String bParty, final Double duration)
     {
-        this.aparty = aparty;
-        this.bparty = bparty;
+        this.aparty = aParty;
+        this.bparty = bParty;
         this.duration = duration;
     }
 

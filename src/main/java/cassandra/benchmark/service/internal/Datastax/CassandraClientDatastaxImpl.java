@@ -4,11 +4,14 @@ import cassandra.benchmark.service.internal.CassandraClient;
 import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.SampleOfLongs;
 import cassandra.benchmark.service.internal.TimingInterval;
+import cassandra.benchmark.service.internal.model.Mutation;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.List;
 
 /**
  * Created by cosh on 13.05.14.
@@ -41,7 +44,6 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
                         "primary key((identity, timeBucket), time)" +
                         ");"
         );
-
     }
 
     @Override
@@ -54,6 +56,11 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
     public void teardown() {
         session.close();
         cluster.close();
+    }
+
+    @Override
+    public long executeBatch(final List<Mutation> mutation) {
+        return 0;
     }
 
     public Cluster connect(final String node, final String clusterName) {
