@@ -17,7 +17,7 @@
 package cassandra.benchmark;
 
 import cassandra.benchmark.service.CassandraBenchmarkService;
-import cassandra.benchmark.service.CassandraBenchmarkServiceImpl;
+import cassandra.benchmark.service.internal.CassandraBenchmarkServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

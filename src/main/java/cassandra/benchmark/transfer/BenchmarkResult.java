@@ -8,16 +8,18 @@ public class BenchmarkResult {
     private final long total;
     private final double interval_op_rate;
     private final double interval_key_rate;
-    private final double latency;
+    private final double meanlatency;
+    private final double medianlatency;
     private final double ninetyFiveTh;
     private final double ninetyNineTh;
     private final double elapsed;
 
-    public BenchmarkResult(long total, double interval_op_rate, double interval_key_rate, double latency, double ninetyFiveTh, double ninetyNineTh, double elapsed) {
+    public BenchmarkResult(long total, double interval_op_rate, double interval_key_rate, double meanlatency, double medianlatency, double ninetyFiveTh, double ninetyNineTh, double elapsed) {
         this.total = total;
         this.interval_op_rate = interval_op_rate;
         this.interval_key_rate = interval_key_rate;
-        this.latency = latency;
+        this.meanlatency = meanlatency;
+        this.medianlatency = medianlatency;
         this.ninetyFiveTh = ninetyFiveTh;
         this.ninetyNineTh = ninetyNineTh;
         this.elapsed = elapsed;
@@ -35,8 +37,11 @@ public class BenchmarkResult {
         return interval_key_rate;
     }
 
-    public double getLatency() {
-        return latency;
+    public double getMeanlatency() {
+        return meanlatency;
+    }
+    public double getMedianlatency() {
+        return medianlatency;
     }
 
     public double getNinetyFiveTh() {
