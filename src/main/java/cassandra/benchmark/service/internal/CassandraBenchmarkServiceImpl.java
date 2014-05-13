@@ -41,19 +41,47 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
 
         try {
 
-            final int numberOfBatches = getNumberOfBatches(numberOfRows, batchSize);
+            final int numberOfBatches = getNumberOfBatches(numberOfRows, wideRowCount, batchSize);
             final long[] measures = new long[numberOfBatches];
             final Random prng = new Random();
 
+            int currentColumnCount = 0;
+            String identityBase = "identity";
+            int currentIdentityNonce = prng.nextInt(23232323);
+            Long currentBucket = new Long(prng.nextInt(54));
+
+            IdentityBucketRK identity = new IdentityBucketRK(String.format("%s-%d", identityBase, currentIdentityNonce), currentBucket);
+
             for (int i = 0; i < numberOfBatches; i++) {
-                measures[i] = client.executeBatch(generateObjects(prng, batchSize, wideRowCount));
+
+                List<Mutation> mutations = new ArrayList<Mutation>(batchSize);
+                while (mutations.size() < batchSize)
+                {
+
+                    if(currentColumnCount < wideRowCount)
+                    {
+                        //same identity
+                    }
+                    else
+                    {
+                        currentIdentityNonce = prng.nextInt(23232323);
+                        currentBucket = new Long(prng.nextInt(54));
+                        identity = new IdentityBucketRK(String.format("%s-%d", identityBase, currentIdentityNonce), currentBucket);
+                        currentColumnCount = 0;
+                    }
+
+                    mutations.add(new Mutation(identity, prng.nextLong(), new CommunicationCV("aParty", "bParty", prng.nextDouble())));
+                    currentColumnCount++;
+                }
+
+                measures[i] = client.executeBatch(mutations);
             }
 
             long endTime = System.nanoTime();
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-            ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, numberOfBatches * batchSize * wideRowCount, getTotal(measures), numberOfBatches, measurements);
+            ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, numberOfRows * wideRowCount, getTotal(measures), numberOfBatches, measurements);
         }
         finally {
             client.teardown();
@@ -89,8 +117,8 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
         return String.format("identity%s-%d", row, prng.nextInt(100));
     }
 
-    private int getNumberOfBatches(long numberOfRows, final int batchSize) {
-        return (int) (numberOfRows / batchSize);
+    private int getNumberOfBatches(long numberOfRows, final int wideRowCount, final int batchSize) {
+        return (int) ((numberOfRows*wideRowCount) / batchSize);
     }
 
     @Override
