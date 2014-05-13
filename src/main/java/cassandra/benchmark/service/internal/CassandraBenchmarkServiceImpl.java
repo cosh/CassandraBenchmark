@@ -1,18 +1,14 @@
 package cassandra.benchmark.service.internal;
 
 import cassandra.benchmark.service.CassandraBenchmarkService;
+import cassandra.benchmark.service.CassandraClientType;
+import cassandra.benchmark.service.internal.Astyanax.CassandraClientAstyanaxImpl;
+import cassandra.benchmark.service.internal.Datastax.CassandraClientDatastaxImpl;
 import cassandra.benchmark.transfer.BenchmarkResult;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by cosh on 12.05.14.
@@ -21,58 +17,66 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
 
     private static Logger logger = LogManager.getLogger("CassandraBenchmarkServiceImpl");
 
-    private static final String keyspaceName = "cassandraBenchmark";
-    private static final String tableName = "wideRowTable";
-
+    private final static CassandraClientAstyanaxImpl astyanax = new CassandraClientAstyanaxImpl();
+    private final static CassandraClientDatastaxImpl datastax = new CassandraClientDatastaxImpl();
 
     @Override
-    public BenchmarkResult executeBenchmark(final String seedNode, final String clusterName, final long numberOfRows, final int wideRowCount, final int batchSize) {
+    public BenchmarkResult executeBenchmark(final CassandraClientType client, final String seedNode, final String clusterName, final long numberOfRows, final int wideRowCount, final int batchSize) {
         return new BenchmarkResult(1, 2.3, 4.5, 6.7, 8.9, 9.10, 9.55, 11.12);
     }
 
     @Override
-    public BenchmarkResult createSchema(final String seedNode, final String clusterName, final int replicationFactor) {
+    public BenchmarkResult createSchema(final CassandraClientType clientEnum, final String seedNode, final String clusterName, final int replicationFactor) {
 
-        final Cluster cluster = connect(seedNode, clusterName);
-        final Session session = cluster.connect();
+        CassandraClient client = getClient(clientEnum);
 
-        long[] measures = new long[2];
+        client.initialize(seedNode, clusterName);
 
         long startTime = System.nanoTime();
+        TimingInterval ti = new TimingInterval(startTime);
 
-        long measure1 = executeStatement(session,
-                "CREATE KEYSPACE IF NOT EXISTS " + keyspaceName + " WITH replication " +
-                        "= {'class':'SimpleStrategy', 'replication_factor':" + replicationFactor + "};");
+        try {
+            long[] measures = new long[2];
 
-        logger.debug("Created the keyspace {0} with replication factor {1}.", keyspaceName, replicationFactor);
+            long measure1 = client.createKeyspace(replicationFactor);
+            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
 
-        long measure2 = executeStatement(session,
-                "CREATE TABLE IF NOT EXISTS " + keyspaceName + " ." + tableName + " (" +
-                        "identity text," +
-                        "timeBucket int," +
-                        "time timeuuid," +
-                        "aparty text," +
-                        "bparty text," +
-                        "duration float," +
-                        "primary key((identity, timeBucket), time)" +
-                        ");"
-        );
+            long measure2 = client.createTable();
+            logger.debug("Created the table {0} in keyspace {1}.", Constants.tableName, Constants.keyspaceName);
 
-        long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
-        measures[0] = measure1;
-        measures[1] = measure2;
+            measures[0] = measure1;
+            measures[1] = measure2;
 
-        logger.debug("Created the table {0} in keyspace {1}.", tableName, keyspaceName);
+            SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-        SampleOfLongs measurements = new SampleOfLongs(measures, 1);
-
-        TimingInterval ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, 2, getTotal(measures), 2, measurements);
-
-        session.close();
-        cluster.close();
+            ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, 2, getTotal(measures), 2, measurements);
+        }
+        finally {
+            client.teardown();
+        }
 
         return new BenchmarkResult(ti.operationCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
+    }
+
+    private CassandraClient getClient(CassandraClientType clientEnum) {
+        CassandraClient client = null;
+
+        switch (clientEnum) {
+            case ASTYANAX:
+                client = astyanax;
+                break;
+
+            case DATASTAX:
+                client = datastax;
+                break;
+
+            default:
+                client = datastax;
+        }
+
+        return client;
     }
 
     private long getTotal(long[] samples) {
@@ -102,26 +106,5 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
         }
         
         return max;
-    }
-
-    private long executeStatement(Session session, String statement) {
-        long startTime = System.nanoTime();
-        session.execute(statement);
-        return System.nanoTime() - startTime;
-    }
-
-    private final static double calculateSeconds(final long estimatedTime) {
-        return (double)estimatedTime / 1000000000.0;
-    }
-
-    public Cluster connect(final String node, final String clusterName) {
-        final Cluster cluster = Cluster.builder()
-                .addContactPoint(node)
-                .withClusterName(clusterName)
-                .build();
-        final Metadata metadata = cluster.getMetadata();
-        logger.debug("Connected to cluster: %s\n",
-                metadata.getClusterName());
-        return cluster;
     }
 }

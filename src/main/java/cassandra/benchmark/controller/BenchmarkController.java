@@ -17,10 +17,9 @@
 package cassandra.benchmark.controller;
 
 import cassandra.benchmark.service.CassandraBenchmarkService;
+import cassandra.benchmark.service.CassandraClientType;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,21 +45,50 @@ public class BenchmarkController {
 
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public BenchmarkResult testAllNodes(
+            final @RequestParam(required = false, defaultValue = "datastax") String client,
             final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
             final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
             final @RequestParam(required = false, defaultValue = "100000") long numberOfRows,
             final @RequestParam(required = false, defaultValue = "20") int wideRowCount,
             final @RequestParam(required = false, defaultValue = "1000") int batchSize)
     {
-        return service.executeBenchmark(seedNode, clusterName, numberOfRows, wideRowCount, batchSize);
+        CassandraClientType clientType = getClientType(client);
+
+        return service.executeBenchmark(clientType, seedNode, clusterName, numberOfRows, wideRowCount, batchSize);
     }
 
     @RequestMapping(value = "/schema/create", method = RequestMethod.PUT)
     public BenchmarkResult createSchema(
+            final @RequestParam(required = false, defaultValue = "datastax") String client,
             final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
             final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
             final @RequestParam(required = false, defaultValue = "3") int rf)
     {
-        return service.createSchema(seedNode, clusterName, rf);
+        CassandraClientType clientType = getClientType(client);
+
+        return service.createSchema(clientType, seedNode, clusterName, rf);
+    }
+
+    private CassandraClientType getClientType(String client) {
+        CassandraClientType clientType;
+
+        String clientTypeString = client.toLowerCase();
+        if(clientTypeString.equals("datastax"))
+        {
+            clientType = CassandraClientType.DATASTAX;
+        }
+        else
+        {
+            if(clientTypeString.equals("astyanax"))
+            {
+                clientType = CassandraClientType.ASTYANAX;
+            }
+            else
+            {
+                clientType = CassandraClientType.DATASTAX;
+            }
+        }
+
+        return clientType;
     }
 }
