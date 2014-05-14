@@ -25,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/")
 public class BenchmarkController {
@@ -57,7 +60,7 @@ public class BenchmarkController {
      * @param batchSize The batch size
      * @return Timings
      */
-    @RequestMapping(value = "/benchmark", method = RequestMethod.GET)
+    @RequestMapping(value = "/client/benchmark", method = RequestMethod.GET)
     public BenchmarkResult testAllNodes(
             final @RequestParam(required = false, defaultValue = "astyanax") String client,
             final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
@@ -70,6 +73,40 @@ public class BenchmarkController {
         CassandraClientType clientType = getClientType(client);
 
         return service.executeBenchmark(clientType, seedNode, port, clusterName, numberOfRows, wideRowCount, batchSize);
+    }
+
+    /**
+     * Benchmark the cluster
+     *
+     * This method does NOT create a schema,
+     *
+     * @param seedNode The seed node
+     * @param port The (thrift) port
+     * @param clusterName The name of the cluster
+     * @param numberOfRows The number of rows that should be created
+     * @param wideRowCount The size of each wide row
+     * @param batchSize The batch size
+     * @return Timings
+     */
+    @RequestMapping(value = "/benchmark", method = RequestMethod.GET)
+    public Map<String, BenchmarkResult> testAllNodes(
+            final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
+            final @RequestParam(required = false, defaultValue = "9160") int port,
+            final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
+            final @RequestParam(required = false, defaultValue = "100000") long numberOfRows,
+            final @RequestParam(required = false, defaultValue = "20") int wideRowCount,
+            final @RequestParam(required = false, defaultValue = "1000") int batchSize) throws InterruptedException {
+        Map<String, BenchmarkResult> result = new HashMap<String, BenchmarkResult>(4);
+
+        result.put("createSchemaAstyanax", service.createSchema(CassandraClientType.ASTYANAX, seedNode, port, clusterName, 3));
+        Thread.sleep(2000);
+        result.put("createSchemaDatastax", service.createSchema(CassandraClientType.DATASTAX, seedNode, port, clusterName, 3));
+        Thread.sleep(2000);
+
+        result.put("benchMarkAstyanax", service.executeBenchmark(CassandraClientType.ASTYANAX, seedNode, port, clusterName, numberOfRows, wideRowCount, batchSize));
+        result.put("benchMarkDatastax", service.executeBenchmark(CassandraClientType.DATASTAX, seedNode, port, clusterName, numberOfRows, wideRowCount, batchSize));
+
+        return result;
     }
 
     /**
