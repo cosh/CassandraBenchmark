@@ -6,20 +6,20 @@ package cassandra.benchmark.transfer;
 public class BenchmarkResult {
 
     private final long totalOps;
-    private final long totalKeys;
-    private final double interval_op_rate;
-    private final double interval_key_rate;
+    private final long totalStatements;
+    private final double ops_rate;
+    private final double statements_rate;
     private final double meanlatency;
     private final double medianlatency;
     private final double ninetyFiveTh;
     private final double ninetyNineTh;
     private final double elapsed;
 
-    public BenchmarkResult(long totalOps, long totalKeys, double interval_op_rate, double interval_key_rate, double meanlatency, double medianlatency, double ninetyFiveTh, double ninetyNineTh, double elapsed) {
+    public BenchmarkResult(long totalOps, long totalStatements, double ops_rate, double statements_rate, double meanlatency, double medianlatency, double ninetyFiveTh, double ninetyNineTh, double elapsed) {
         this.totalOps = totalOps;
-        this.totalKeys = totalKeys;
-        this.interval_op_rate = interval_op_rate;
-        this.interval_key_rate = interval_key_rate;
+        this.totalStatements = totalStatements;
+        this.ops_rate = ops_rate;
+        this.statements_rate = statements_rate;
         this.meanlatency = meanlatency;
         this.medianlatency = medianlatency;
         this.ninetyFiveTh = ninetyFiveTh;
@@ -27,39 +27,75 @@ public class BenchmarkResult {
         this.elapsed = elapsed;
     }
 
+    /**
+     * The total number of requests to the database (batch-requests most of the time)
+     * @return The total number of operations
+     */
     public long getTotalOps() {
         return totalOps;
     }
 
-    public double getInterval_op_rate() {
-        return interval_op_rate;
+    /**
+     * The number of operations (batch-requests) per second)
+     * @return Operations per second
+     */
+    public double getOps_rate() {
+        return ops_rate;
     }
 
-    public double getInterval_key_rate() {
-        return interval_key_rate;
+    /**
+     * The number of statements per second
+     * @return Statements per second
+     */
+    public double getStatements_rate() {
+        return statements_rate;
     }
 
+    /**
+     * The mean latency  of the requests
+     * @return Mean latency
+     */
     public double getMeanlatency() {
         return meanlatency;
     }
 
+    /**
+     * The median latency of the requests
+     * @return The media latency
+     */
     public double getMedianlatency() {
         return medianlatency;
     }
 
+    /**
+     * The 95th percentile of the request latency
+     * @return The 95th percentile
+     */
     public double getNinetyFiveTh() {
         return ninetyFiveTh;
     }
 
+    /**
+     * The 99th percentile of the request latency
+     * @return The 99th percentile
+     */
     public double getNinetyNineTh() {
         return ninetyNineTh;
     }
 
+    /**
+     * Elapsed time in ms
+     * @return Elapsed time in ms
+     */
     public double getElapsed() {
         return elapsed;
     }
 
-    public long getTotalKeys() {
-        return totalKeys;
+    /**
+     * The total number of statements
+     * @return The total number of statements
+     */
+    public long getTotalStatements() {
+        return totalStatements;
     }
 }
