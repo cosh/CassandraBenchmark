@@ -52,7 +52,6 @@ public class CassandraClientAstyanaxImpl implements CassandraClient{
      * Major cassandra version compatibility
      */
     private String cassandraVersion = "1.2";
-    private int port = 9160;
     private int connectTimeout = ConnectionPoolConfigurationImpl.DEFAULT_CONNECT_TIMEOUT;
 
     private final static AnnotatedCompositeSerializer<IdentityBucketRK> identityBucketSerializer = new AnnotatedCompositeSerializer<IdentityBucketRK>(
@@ -94,8 +93,8 @@ public class CassandraClientAstyanaxImpl implements CassandraClient{
     }
 
     @Override
-    public void initialize(String seedNode, String clusterName) {
-        this.astyanaxContext = initializeContext(seedNode, clusterName);
+    public void initialize(final String seedNode, final int port, final String clusterName) {
+        this.astyanaxContext = initializeContext(seedNode, port, clusterName);
         this.astyanaxContext.start();
         this.cluster = astyanaxContext.getClient();
         if (!keySpaceExists(Constants.keyspaceName))
@@ -214,7 +213,7 @@ public class CassandraClientAstyanaxImpl implements CassandraClient{
         return keyspaceExists;
     }
 
-    private AstyanaxContext<Cluster> initializeContext(String seeds, String clusterName) {
+    private AstyanaxContext<Cluster> initializeContext(final String seeds, final int port, final String clusterName) {
 
         /* Will resort hosts per token partition every 10 seconds */
         final int updateInterval = 10000;

@@ -37,16 +37,31 @@ public class BenchmarkController {
     }
 
 	@RequestMapping
-    public String testOnAllNodes()
+    public String letsSeeIfItsAlive()
     {
         return "This service is working fine";
     }
 
 
-    @RequestMapping(value = "/all", method = RequestMethod.GET)
+    /**
+     * Benchmark the cluster
+     *
+     * This method does NOT create a schema,
+     *
+     * @param client The client that should be used
+     * @param seedNode The seed node
+     * @param port The (thrift) port
+     * @param clusterName The name of the cluster
+     * @param numberOfRows The number of rows that should be created
+     * @param wideRowCount The size of each wide row
+     * @param batchSize The batch size
+     * @return Timings
+     */
+    @RequestMapping(value = "/benchmark", method = RequestMethod.GET)
     public BenchmarkResult testAllNodes(
-            final @RequestParam(required = false, defaultValue = "datastax") String client,
+            final @RequestParam(required = false, defaultValue = "astyanax") String client,
             final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
+            final @RequestParam(required = false, defaultValue = "9160") int port,
             final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
             final @RequestParam(required = false, defaultValue = "100000") long numberOfRows,
             final @RequestParam(required = false, defaultValue = "20") int wideRowCount,
@@ -54,21 +69,39 @@ public class BenchmarkController {
     {
         CassandraClientType clientType = getClientType(client);
 
-        return service.executeBenchmark(clientType, seedNode, clusterName, numberOfRows, wideRowCount, batchSize);
+        return service.executeBenchmark(clientType, seedNode, port, clusterName, numberOfRows, wideRowCount, batchSize);
     }
 
+    /**
+     * Creates the schema for the benchmark
+     *
+     * there are two different schema variations for Astyanax(thrift) or Datastax (CQL).
+     *
+     * @param client The client that should be used
+     * @param seedNode The seed node
+     * @param port The (thrift) port
+     * @param clusterName The name of the cluster
+     * @param rf The replication factor
+     * @return Timings
+     */
     @RequestMapping(value = "/schema/create", method = RequestMethod.PUT)
     public BenchmarkResult createSchema(
-            final @RequestParam(required = false, defaultValue = "datastax") String client,
+            final @RequestParam(required = false, defaultValue = "astyanax") String client,
             final @RequestParam(required = false, defaultValue = "127.0.0.1") String seedNode,
+            final @RequestParam(required = false, defaultValue = "9160") int port,
             final @RequestParam(required = false, defaultValue = "Test Cluster") String clusterName,
             final @RequestParam(required = false, defaultValue = "3") int rf)
     {
         CassandraClientType clientType = getClientType(client);
 
-        return service.createSchema(clientType, seedNode, clusterName, rf);
+        return service.createSchema(clientType, seedNode, port, clusterName, rf);
     }
 
+    /**
+     * Define the client type corresponding to the client type string
+     * @param client
+     * @return
+     */
     private CassandraClientType getClientType(String client) {
         CassandraClientType clientType;
 

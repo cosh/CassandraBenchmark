@@ -10,13 +10,36 @@ import java.util.List;
  */
 public interface CassandraClient {
 
+    /**
+     * Creats the keyspace
+     * @param replicationFactor The replication factor
+     * @return time to execute the request in ms
+     */
     long createKeyspace(final int replicationFactor);
 
+    /**
+     * Creates the table/column-family
+     * @return time to execute the request in ms
+     */
     long createTable();
 
-    void initialize(final String seedNode, final String clusterName);
+    /**
+     * Initializes the client
+     * @param seedNode The seed node
+     * @param port The (thrift/cql-native) port
+     * @param clusterName The cluster name
+     */
+    void initialize(final String seedNode, final int port, final String clusterName);
 
+    /**
+     * shutting down the client
+     */
     void teardown();
 
-    long executeBatch(final List<Mutation> mutation);
+    /**
+     * Executes a mutation/statement
+     * @param mutations The list of mutations
+     * @return time to execute the request (batch of mutations) in ms
+     */
+    long executeBatch(final List<Mutation> mutations);
 }

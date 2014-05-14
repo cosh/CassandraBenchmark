@@ -43,8 +43,8 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
     }
 
     @Override
-    public void initialize(final String seedNode, final String clusterName) {
-        cluster = connect(seedNode, clusterName);
+    public void initialize(final String seedNode, final int port, final String clusterName) {
+        cluster = connect(seedNode, port, clusterName);
         session = cluster.connect();
     }
 
@@ -92,7 +92,7 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
         return new SimpleStatement(insertString);
     }
 
-    public Cluster connect(final String node, final String clusterName) {
+    public Cluster connect(final String node, final int port,  final String clusterName) {
         final Cluster cluster = Cluster.builder()
                 .addContactPoint(node)
                 .withClusterName(clusterName)

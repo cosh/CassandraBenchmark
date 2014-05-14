@@ -10,6 +10,7 @@ import cassandra.benchmark.service.internal.model.Mutation;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,13 +29,14 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
     @Override
     public BenchmarkResult executeBenchmark(final CassandraClientType clientType,
                                             final String seedNode,
+                                            final int port,
                                             final String clusterName,
                                             final long numberOfRows,
                                             final int wideRowCount,
                                             final int batchSize) {
         CassandraClient client = getClient(clientType);
 
-        client.initialize(seedNode, clusterName);
+        client.initialize(seedNode, port, clusterName);
 
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
@@ -55,15 +57,11 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
             for (int i = 0; i < numberOfBatches; i++) {
 
                 List<Mutation> mutations = new ArrayList<Mutation>(batchSize);
-                while (mutations.size() < batchSize)
-                {
+                while (mutations.size() < batchSize) {
 
-                    if(currentColumnCount < wideRowCount)
-                    {
+                    if (currentColumnCount < wideRowCount) {
                         //same identity
-                    }
-                    else
-                    {
+                    } else {
                         currentIdentityNonce = prng.nextInt(23232323);
                         currentBucket = new Long(prng.nextInt(54));
                         identity = new IdentityBucketRK(String.format("%s-%d", identityBase, currentIdentityNonce), currentBucket);
@@ -82,12 +80,11 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
             ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, numberOfRows * wideRowCount, getTotal(measures), numberOfBatches, measurements);
-        }
-        finally {
+        } finally {
             client.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime());
     }
 
     private List<Mutation> generateObjects(final Random prng, int batchSize, int wideRowCount) {
@@ -118,15 +115,16 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
     }
 
     private int getNumberOfBatches(long numberOfRows, final int wideRowCount, final int batchSize) {
-        return (int) ((numberOfRows*wideRowCount) / batchSize);
+        return (int) ((numberOfRows * wideRowCount) / batchSize);
     }
 
     @Override
-    public BenchmarkResult createSchema(final CassandraClientType clientEnum, final String seedNode, final String clusterName, final int replicationFactor) {
+    public BenchmarkResult createSchema(final CassandraClientType clientEnum, final String seedNode,
+                                        final int port, final String clusterName, final int replicationFactor) {
 
         CassandraClient client = getClient(clientEnum);
 
-        client.initialize(seedNode, clusterName);
+        client.initialize(seedNode, port, clusterName);
 
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
@@ -148,12 +146,11 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
             ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, 2, getTotal(measures), 2, measurements);
-        }
-        finally {
+        } finally {
             client.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(),ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime() );
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime());
     }
 
     private CassandraClient getClient(CassandraClientType clientEnum) {
@@ -176,8 +173,7 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
     }
 
     private long getTotal(long[] samples) {
-        if(samples.length == 0)
-        {
+        if (samples.length == 0) {
             return 0;
         }
 
@@ -187,20 +183,18 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
     }
 
     private long getMax(long[] samples) {
-        if(samples.length == 0)
-        {
+        if (samples.length == 0) {
             return 0;
         }
-        
+
         long max = 0;
 
         for (int i = 0; i < samples.length; i++) {
-            if(samples[i] > max)
-            {
+            if (samples[i] > max) {
                 max = samples[i];
             }
         }
-        
+
         return max;
     }
 }
