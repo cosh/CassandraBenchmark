@@ -41,7 +41,7 @@
             <artifactId>astyanax</artifactId>
             <version>1.56.48</version>
         </dependency>
-	</dependencies>
+    </dependencies>
 	<build>
 		<plugins>
 			<plugin>

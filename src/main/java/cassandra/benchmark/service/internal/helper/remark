@@ -1,0 +1,3 @@
+Copied files
+SampleOfLongs.java: https://github.com/apache/cassandra/blob/trunk/tools/stress/src/org/apache/cassandra/stress/util/SampleOfLongs.java
+TimingInterval.java: https://github.com/apache/cassandra/blob/trunk/tools/stress/src/org/apache/cassandra/stress/util/TimingInterval.java

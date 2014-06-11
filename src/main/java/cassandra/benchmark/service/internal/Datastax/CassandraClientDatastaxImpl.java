@@ -34,7 +34,8 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
                         "identity text," +
                         "timeBucket int," +
                         "time bigint," +
-                        "aparty text," +
+                        "aPartyImsi text," +
+                        "aPartyImei text," +
                         "bparty text," +
                         "duration float," +
                         "primary key((identity, timeBucket), time)" +
@@ -77,15 +78,17 @@ public class CassandraClientDatastaxImpl implements CassandraClient {
                 "identity," +
                 "timeBucket," +
                 "time," +
-                "aparty," +
+                "aPartyImsi," +
+                "aPartyImei," +
                 "bparty," +
                 "duration ) " +
                 "VALUES (" +
                 "'" + mutation.getIdentity().getIdentity()+ "'" + ","+
                 mutation.getIdentity().getBucket() + ","+
                 mutation.getTimeStamp() + ","+
-                "'" + mutation.getCommunication().getAparty()+ "'" + ","+
-                "'" + mutation.getCommunication().getBparty()+ "'" + ","+
+                "'" + mutation.getCommunication().getaPartyImsi()+ "'" + ","+
+                "'" + mutation.getCommunication().getaPartyImei()+ "'" + ","+
+                "'" + mutation.getCommunication().getbParty()+ "'" + ","+
                 mutation.getCommunication().getDuration()+
                 ");";
 

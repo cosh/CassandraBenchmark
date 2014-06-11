@@ -8,18 +8,22 @@ import com.netflix.astyanax.annotations.Component;
 public class CommunicationCV {
 
     @Component(ordinal = 0)
-    String aparty;
+    String aPartyImsi;
 
     @Component(ordinal = 1)
-    String bparty;
+    String aPartyImei;
 
     @Component(ordinal = 2)
+    String bParty;
+
+    @Component(ordinal = 3)
     Double duration;
 
     public CommunicationCV(final String aParty, final String bParty, final Double duration)
     {
-        this.aparty = aParty;
-        this.bparty = bParty;
+        this.aPartyImei = "imei of " + aParty;
+        this.aPartyImsi = "imsi of " + aParty;
+        this.bParty = bParty;
         this.duration = duration;
     }
 
@@ -29,12 +33,16 @@ public class CommunicationCV {
 
     }
 
-    public String getAparty() {
-        return aparty;
+    public String getaPartyImsi() {
+        return aPartyImsi;
     }
 
-    public String getBparty() {
-        return bparty;
+    public String getaPartyImei() {
+        return aPartyImei;
+    }
+
+    public String getbParty() {
+        return bParty;
     }
 
     public Double getDuration() {

@@ -4,6 +4,9 @@ import cassandra.benchmark.service.CassandraBenchmarkService;
 import cassandra.benchmark.service.CassandraClientType;
 import cassandra.benchmark.service.internal.Astyanax.CassandraClientAstyanaxImpl;
 import cassandra.benchmark.service.internal.Datastax.CassandraClientDatastaxImpl;
+import cassandra.benchmark.service.internal.helper.SampleOfLongs;
+import cassandra.benchmark.service.internal.helper.SimpleMath;
+import cassandra.benchmark.service.internal.helper.TimingInterval;
 import cassandra.benchmark.service.internal.model.CommunicationCV;
 import cassandra.benchmark.service.internal.model.IdentityBucketRK;
 import cassandra.benchmark.service.internal.model.Mutation;
@@ -12,9 +15,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
+import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
 
 /**
  * Created by cosh on 12.05.14.
@@ -49,10 +54,9 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
 
             int currentColumnCount = 0;
             String identityBase = "identity";
-            int currentIdentityNonce = prng.nextInt(23232323);
-            Long currentBucket = new Long(prng.nextInt(54));
+            Integer currentBucket = getARandomBucket(prng);
 
-            IdentityBucketRK identity = new IdentityBucketRK(String.format("%s-%d", identityBase, currentIdentityNonce), currentBucket);
+            IdentityBucketRK identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
 
             for (int i = 0; i < numberOfBatches; i++) {
 
@@ -62,9 +66,8 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
                     if (currentColumnCount < wideRowCount) {
                         //same identity
                     } else {
-                        currentIdentityNonce = prng.nextInt(23232323);
-                        currentBucket = new Long(prng.nextInt(54));
-                        identity = new IdentityBucketRK(String.format("%s-%d", identityBase, currentIdentityNonce), currentBucket);
+                        currentBucket = getARandomBucket(prng);
+                        identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
                         currentColumnCount = 0;
                     }
 
@@ -79,27 +82,12 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-            ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, numberOfRows * wideRowCount, getTotal(measures), numberOfBatches, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getTotal(measures), numberOfBatches, measurements);
         } finally {
             client.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime());
-    }
-
-    private List<Mutation> generateObjects(final Random prng, int batchSize, int wideRowCount) {
-        List<Mutation> mutations = new ArrayList<Mutation>();
-
-        for (int i = 0; i < batchSize; i++) {
-
-            IdentityBucketRK identity = new IdentityBucketRK(createIdentiy(i, prng), new Long(i));
-
-            for (int j = 0; j < wideRowCount; j++) {
-                mutations.add(generateMutation(prng, identity, j));
-            }
-        }
-
-        return mutations;
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
     }
 
     private Mutation generateMutation(final Random prng, final IdentityBucketRK row, int column) {
@@ -108,10 +96,6 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
         CommunicationCV communication = new CommunicationCV("aPartyName", "bPartyName", prng.nextDouble());
 
         return new Mutation(row, timestamp, communication);
-    }
-
-    private String createIdentiy(int row, Random prng) {
-        return String.format("identity%s-%d", row, prng.nextInt(100));
     }
 
     private int getNumberOfBatches(long numberOfRows, final int wideRowCount, final int batchSize) {
@@ -145,12 +129,12 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-            ti = new TimingInterval(startTime, endTime, getMax(measures), 0, 0, 2, getTotal(measures), 2, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, 2, SimpleMath.getTotal(measures), 2, measurements);
         } finally {
             client.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime());
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
     }
 
     private CassandraClient getClient(CassandraClientType clientEnum) {
@@ -170,31 +154,5 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
         }
 
         return client;
-    }
-
-    private long getTotal(long[] samples) {
-        if (samples.length == 0) {
-            return 0;
-        }
-
-        Arrays.sort(samples);
-
-        return samples[samples.length - 1];
-    }
-
-    private long getMax(long[] samples) {
-        if (samples.length == 0) {
-            return 0;
-        }
-
-        long max = 0;
-
-        for (int i = 0; i < samples.length; i++) {
-            if (samples[i] > max) {
-                max = samples[i];
-            }
-        }
-
-        return max;
     }
 }

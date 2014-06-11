@@ -11,9 +11,9 @@ public class IdentityBucketRK {
     String identity;
 
     @Component(ordinal = 1)
-    private Long bucket;
+    private Integer bucket;
 
-    public IdentityBucketRK(final String identity, final Long bucket)
+    public IdentityBucketRK(final String identity, final Integer bucket)
     {
         this.identity = identity;
         this.bucket = bucket;
@@ -29,7 +29,7 @@ public class IdentityBucketRK {
         return identity;
     }
 
-    public Long getBucket() {
+    public Integer getBucket() {
         return bucket;
     }
 }
