@@ -17,4 +17,8 @@ public class DataGenerator {
     public static Integer getARandomBucket(Random prng) {
         return new Integer(prng.nextInt(365));
     }
+
+    public static int getNumberOfBatches(final long numberOfRows, final int wideRowCount, final int batchSize) {
+        return (int) ((numberOfRows * wideRowCount) / batchSize);
+    }
 }

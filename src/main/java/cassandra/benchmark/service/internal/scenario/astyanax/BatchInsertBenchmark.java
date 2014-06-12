@@ -21,6 +21,7 @@ import java.util.Random;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
 import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
+import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumberOfBatches;
 
 /**
  * Created by cosh on 02.06.14.
@@ -55,7 +56,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
 
             super.initializeForBenchMarkDefault(context);
 
-            final int numberOfBatches = getNumberOfBatches();
+            final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
             final long[] measures = new long[numberOfBatches];
             final Random prng = new Random();
 
@@ -159,9 +160,5 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         {
             wideRowCount = Integer.parseInt((extractedParameterString));
         }
-    }
-
-    private static int getNumberOfBatches() {
-        return (int) ((numberOfRows * wideRowCount) / batchSize);
     }
 }

@@ -1,4 +1,4 @@
-package cassandra.benchmark.service.internal.scenario.astyanax;
+package cassandra.benchmark.service.internal.scenario.datastax;
 
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
@@ -9,8 +9,6 @@ import cassandra.benchmark.service.internal.model.Mutation;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
-import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,9 +24,9 @@ import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumbe
 /**
  * Created by cosh on 02.06.14.
  */
-public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scenario {
+public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario {
 
-    private static Logger logger = LogManager.getLogger(BatchInsertAsyncBenchmark.class);
+    private static Logger logger = LogManager.getLogger(BatchInsertBenchmark.class);
     private static Long defaultInsertCount = 10000L;
 
     private static Long numberOfRows = 10000L;
@@ -38,7 +36,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     @Override
     public BenchmarkResult createDatamodel(ScenarioContext context, int replicationFactor) {
 
-        return super.createDefaultDatamodel(context, replicationFactor);
+        return  null;
     }
 
     @Override
@@ -47,7 +45,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
         exctractParameter(context);
 
-        logger.debug(String.format("Executing astyanax async batch insert benchmark with the following parameters rowCount:%d, wideRowCount:&d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
+        logger.debug(String.format("Executing datastax batch insert benchmark with the following parameters rowCount:%d, wideRowCount:&d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
 
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
@@ -101,19 +99,14 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     private long executeBatch(final List<Mutation> mutations) {
         long startTime = System.nanoTime();
 
-        MutationBatch batch = super.keyspace.prepareMutationBatch();
+        //...
 
         for (Mutation aMutation : mutations)
         {
-            batch.withRow(model, aMutation.getIdentity())
-                    .putColumn(aMutation.getTimeStamp(), aMutation.getCommunication(), valueSerializer, 0);
+            //...
         }
 
-        try {
-            batch.executeAsync();
-        } catch (ConnectionException e) {
-            logger.error("error inserting batch", e);
-        }
+        //...
 
         return System.nanoTime() - startTime;
     }
