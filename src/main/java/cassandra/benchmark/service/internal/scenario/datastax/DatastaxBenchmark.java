@@ -4,6 +4,7 @@ import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
+import cassandra.benchmark.service.internal.model.Mutation;
 import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.Cluster;
@@ -13,6 +14,8 @@ import com.google.common.collect.ImmutableMap;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.sql.PreparedStatement;
 
 /**
  * Created by cosh on 02.06.14.

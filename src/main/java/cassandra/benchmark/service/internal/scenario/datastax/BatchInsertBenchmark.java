@@ -11,13 +11,14 @@ import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.SimpleStatement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
@@ -67,6 +68,8 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
             Integer currentBucket = getARandomBucket(prng);
 
+            final com.datastax.driver.core.PreparedStatement preparedStatement = createPreparedStatement();
+
             IdentityBucketRK identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
 
             for (int i = 0; i < numberOfBatches; i++) {
@@ -86,7 +89,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                     currentColumnCount++;
                 }
 
-                measures[i] = executeBatch(mutations);
+                measures[i] = executeBatch(preparedStatement, mutations);
             }
 
             long endTime = System.nanoTime();
@@ -101,14 +104,14 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
         return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
     }
 
-    private long executeBatch(final List<Mutation> mutations) {
+    private long executeBatch(final com.datastax.driver.core.PreparedStatement preparedStatement, final List<Mutation> mutations) {
         long startTime = System.nanoTime();
 
         BatchStatement bs = new BatchStatement();
 
         for (Mutation aMutation : mutations)
         {
-            SimpleStatement statement = createInsertStatement(aMutation);
+            BoundStatement statement = createInsertStatement(aMutation, preparedStatement);
             bs.add(statement);
         }
 
@@ -117,9 +120,21 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
         return System.nanoTime() - startTime;
     }
 
-    private SimpleStatement createInsertStatement(Mutation mutation) {
+    private BoundStatement createInsertStatement(final Mutation mutation, final com.datastax.driver.core.PreparedStatement preparedStatement) {
 
-        String insertString = "INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
+        return preparedStatement.bind(
+                mutation.getIdentity().getIdentity(),
+                mutation.getIdentity().getBucket(),
+                mutation.getTimeStamp(),
+                mutation.getCommunication().getaPartyImsi(),
+                mutation.getCommunication().getaPartyImei(),
+                mutation.getCommunication().getbParty(),
+                mutation.getCommunication().getDuration());
+    }
+
+    private com.datastax.driver.core.PreparedStatement createPreparedStatement()
+    {
+        return  session.prepare("INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
                 "identity," +
                 "timeBucket," +
                 "time," +
@@ -128,16 +143,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                 "bparty," +
                 "duration ) " +
                 "VALUES (" +
-                "'" + mutation.getIdentity().getIdentity()+ "'" + ","+
-                mutation.getIdentity().getBucket() + ","+
-                mutation.getTimeStamp() + ","+
-                "'" + mutation.getCommunication().getaPartyImsi()+ "'" + ","+
-                "'" + mutation.getCommunication().getaPartyImei()+ "'" + ","+
-                "'" + mutation.getCommunication().getbParty()+ "'" + ","+
-                mutation.getCommunication().getDuration()+
-                ");";
-
-        return new SimpleStatement(insertString);
+                "?,?,?,?,?,?,?);");
     }
 
     private void exctractParameter(final ScenarioContext context) {
