@@ -1,5 +1,6 @@
 package cassandra.benchmark.service.internal.scenario.datastax;
 
+import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
@@ -9,6 +10,8 @@ import cassandra.benchmark.service.internal.model.Mutation;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
+import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.SimpleStatement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +39,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     @Override
     public BenchmarkResult createDatamodel(ScenarioContext context, int replicationFactor) {
 
-        return  null;
+        return  super.createDataModel(context, replicationFactor);
     }
 
     @Override
@@ -99,16 +102,40 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     private long executeBatch(final List<Mutation> mutations) {
         long startTime = System.nanoTime();
 
-        //...
+        BatchStatement bs = new BatchStatement();
 
         for (Mutation aMutation : mutations)
         {
-            //...
+            SimpleStatement statement = createInsertStatement(aMutation);
+            bs.add(statement);
         }
 
-        //...
+        super.session.execute(bs);
 
         return System.nanoTime() - startTime;
+    }
+
+    private SimpleStatement createInsertStatement(Mutation mutation) {
+
+        String insertString = "INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
+                "identity," +
+                "timeBucket," +
+                "time," +
+                "aPartyImsi," +
+                "aPartyImei," +
+                "bparty," +
+                "duration ) " +
+                "VALUES (" +
+                "'" + mutation.getIdentity().getIdentity()+ "'" + ","+
+                mutation.getIdentity().getBucket() + ","+
+                mutation.getTimeStamp() + ","+
+                "'" + mutation.getCommunication().getaPartyImsi()+ "'" + ","+
+                "'" + mutation.getCommunication().getaPartyImei()+ "'" + ","+
+                "'" + mutation.getCommunication().getbParty()+ "'" + ","+
+                mutation.getCommunication().getDuration()+
+                ");";
+
+        return new SimpleStatement(insertString);
     }
 
     private static void exctractParameter(final ScenarioContext context) {

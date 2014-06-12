@@ -209,10 +209,8 @@ public abstract class AstyanaxBenchmark {
 
             initializeCluster(context, Constants.keyspaceName);
             getOrCreateKeyspace(Constants.keyspaceName, "SimpleStrategy", replicationFactor);
-            long measure1 = System.nanoTime();
+            long measure1 = System.nanoTime() -startTime;
             logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
-
-
 
             try {
                 keyspace.createColumnFamily(model, ImmutableMap.<String, Object>builder()
@@ -224,7 +222,7 @@ public abstract class AstyanaxBenchmark {
                 logger.error(e);
             }
 
-            long measure2 = System.nanoTime();
+            long measure2 = System.nanoTime()-startTime - measure1;
             logger.debug("Created the table {0} in keyspace {1}.", Constants.tableNameCQL, Constants.keyspaceName);
 
             long endTime = System.nanoTime();
