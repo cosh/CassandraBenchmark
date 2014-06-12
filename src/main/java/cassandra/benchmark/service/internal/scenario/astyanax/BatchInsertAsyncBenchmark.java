@@ -1,5 +1,6 @@
 package cassandra.benchmark.service.internal.scenario.astyanax;
 
+import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
@@ -22,6 +23,9 @@ import java.util.Random;
 import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
 import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
 import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumberOfBatches;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractBatchSize;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractWideRowCount;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractnumberOfRowsCount;
 
 /**
  * Created by cosh on 02.06.14.
@@ -29,7 +33,6 @@ import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumbe
 public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scenario {
 
     private static Logger logger = LogManager.getLogger(BatchInsertAsyncBenchmark.class);
-    private static Long defaultInsertCount = 10000L;
 
     private static Long numberOfRows = 10000L;
     private static Integer wideRowCount = 100;
@@ -118,47 +121,12 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
         return System.nanoTime() - startTime;
     }
 
-    private static void exctractParameter(final ScenarioContext context) {
+    private void exctractParameter(final ScenarioContext context) {
         if(context.getParameter() == null) return;
 
-        extractWideRowCount(context.getParameter());
-        extractnumberOfRowsCount(context.getParameter());
-        extractBatchSize(context.getParameter());
+        this.wideRowCount = extractWideRowCount(context.getParameter());
+        this.numberOfRows = extractnumberOfRowsCount(context.getParameter());
+        this.batchSize = extractBatchSize(context.getParameter());
     }
 
-    private static void extractBatchSize(final Map<String, String> parameter) {
-        String extractedParameterString = extractParameterString(parameter, "batchSize");
-        if(extractedParameterString != null);
-        {
-            batchSize = Integer.parseInt((extractedParameterString));
-        }
-    }
-
-    private static String extractParameterString(Map<String, String> parameters, String interestingElement) {
-        if(interestingElement != null)
-        {
-            if(parameters.containsKey(interestingElement))
-            {
-                return parameters.get(interestingElement);
-            }
-        }
-
-        return null;
-    }
-
-    private static void extractnumberOfRowsCount(final Map<String, String> parameter) {
-        String extractedParameterString = extractParameterString(parameter, "rowCount");
-        if(extractedParameterString != null);
-        {
-            numberOfRows = Long.parseLong((extractedParameterString));
-        }
-    }
-
-    private static void extractWideRowCount(final Map<String, String> parameter) {
-        String extractedParameterString = extractParameterString(parameter, "wideRowCount");
-        if(extractedParameterString != null);
-        {
-            wideRowCount = Integer.parseInt((extractedParameterString));
-        }
-    }
 }
