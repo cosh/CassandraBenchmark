@@ -21,55 +21,62 @@ import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.service.internal.scenario.ScenarioPluginManager;
 import cassandra.benchmark.transfer.BenchmarkResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tomcat.util.http.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.Consumes;
+
 @RestController
-@RequestMapping("/")
 public class BenchmarkScenarioController {
 
     private final ScenarioPluginManager scenarioPluginManager;
+    private static Logger logger = LogManager.getLogger(BenchmarkScenarioController.class);
+
 
     @Autowired
     public BenchmarkScenarioController(final ScenarioPluginManager scenarioPluginManager) {
         this.scenarioPluginManager = scenarioPluginManager;
     }
 
-	@RequestMapping
-    public String letsSeeIfItsAlive()
-    {
-        return "This service is working fine";
-    }
-
-    @RequestMapping(value = "/scenario/{scenarioName}/execute", method = RequestMethod.POST)
+    @RequestMapping(value = "/scenario/execute", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
     public ResponseEntity<BenchmarkResult> executeScenario(
-            final @PathVariable String scenarioName,
             final @RequestBody ExecutionContext context)
     {
         Scenario scenario = null;
 
-        if(scenarioPluginManager.tryGetScenario(scenario, scenarioName))
+        logger.debug(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
+
+        if(scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName()))
         {
             return new ResponseEntity<BenchmarkResult>(scenario.executeBenchmark(context), HttpStatus.OK);
         }
 
+        logger.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
         return new ResponseEntity<BenchmarkResult>(HttpStatus.NOT_FOUND);
     }
 
-    @RequestMapping(value = "/scenario/{scenarioName}/createDatamodel", method = RequestMethod.POST)
+    @RequestMapping(value = "/scenario/createDatamodel", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
     public ResponseEntity<BenchmarkResult> createDatamodelForScenario(
-            final @PathVariable String scenarioName,
             final @RequestBody CreationContext context)
     {
         Scenario scenario = null;
 
-        if(scenarioPluginManager.tryGetScenario(scenario, scenarioName))
+        logger.debug(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
+
+        if(scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName()))
         {
             return new ResponseEntity<BenchmarkResult>(scenario.createDatamodel(context), HttpStatus.OK);
         }
 
+        logger.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
         return new ResponseEntity<BenchmarkResult>(HttpStatus.NOT_FOUND);
     }
 }

@@ -7,31 +7,63 @@ import java.util.Map;
  */
 public class ExecutionContext {
 
-    private final String seedNode;
-    private final int port;
-    private final String clusterName;
-    private final Map<String, String> parameter;
-
-    public ExecutionContext(final String seedNode, final int port, Map<String, String> parameter, final String clusterName) {
-        this.seedNode = seedNode;
-        this.port = port;
-        this.parameter = parameter;
-        this.clusterName = clusterName;
-    }
+    private String seedNode;
+    private int port;
+    private String clusterName;
+    private Map<String, String> parameter;
+    private String benchmarkName;
 
     public String getSeedNode() {
         return seedNode;
+    }
+
+    public void setSeedNode(String seedNode) {
+        this.seedNode = seedNode;
     }
 
     public int getPort() {
         return port;
     }
 
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     public String getClusterName() {
         return clusterName;
     }
 
+    public void setClusterName(String clusterName) {
+        this.clusterName = clusterName;
+    }
+
     public Map<String, String> getParameter() {
         return parameter;
+    }
+
+    public void setParameter(Map<String, String> parameter) {
+        this.parameter = parameter;
+    }
+
+    public String getBenchmarkName() {
+        return benchmarkName;
+    }
+
+    public void setBenchmarkName(String benchmarkName) {
+        this.benchmarkName = benchmarkName;
+    }
+
+    public ExecutionContext() {
+    }
+
+    @Override
+    public String toString() {
+        return "ExecutionContext{" +
+                "seedNode='" + seedNode + '\'' +
+                ", port=" + port +
+                ", clusterName='" + clusterName + '\'' +
+                ", parameter=" + parameter +
+                ", benchmarkName='" + benchmarkName + '\'' +
+                '}';
     }
 }

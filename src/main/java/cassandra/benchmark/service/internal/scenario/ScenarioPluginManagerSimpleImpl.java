@@ -29,6 +29,12 @@ public class ScenarioPluginManagerSimpleImpl implements ScenarioPluginManager {
     @Override
     public boolean tryGetScenario(Scenario scenario,final String name) {
 
+        if(name == null)
+        {
+            scenario = null;
+            return false;
+        }
+
         final Map<String, Scenario> allAvailableScenarios = getAllAvailableScenarios();
 
         if(allAvailableScenarios.containsKey(name.toLowerCase()))

@@ -16,10 +16,8 @@
 
 package cassandra.benchmark;
 
-import cassandra.benchmark.service.CassandraBenchmarkService;
-import cassandra.benchmark.service.internal.CassandraBenchmarkServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
+import cassandra.benchmark.service.internal.scenario.ScenarioPluginManager;
+import cassandra.benchmark.service.internal.scenario.ScenarioPluginManagerSimpleImpl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -35,10 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class Application {
 
     @Bean
-    public CassandraBenchmarkService cassandraBenchmarkService()
+    public ScenarioPluginManager cassandraBenchmarkService()
     {
-        return new CassandraBenchmarkServiceImpl();
+        return new ScenarioPluginManagerSimpleImpl();
     }
+
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);

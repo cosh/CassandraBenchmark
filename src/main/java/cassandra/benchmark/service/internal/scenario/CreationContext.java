@@ -7,14 +7,23 @@ import java.util.Map;
  */
 public class CreationContext extends ExecutionContext {
 
-    private final int replicatioFactor;
-
-    public CreationContext(final String seedNode, final int port, Map<String, String> parameter, final String clusterName, final int replicatioFactor) {
-        super(seedNode, port, parameter, clusterName);
-        this.replicatioFactor = replicatioFactor;
-    }
+    private int replicatioFactor;
 
     public int getReplicatioFactor() {
         return replicatioFactor;
+    }
+
+    public void setReplicatioFactor(int replicatioFactor) {
+        this.replicatioFactor = replicatioFactor;
+    }
+
+    public CreationContext() {
+    }
+
+    @Override
+    public String toString() {
+        return "CreationContext{" +
+                "replicatioFactor=" + replicatioFactor +
+                "} " + super.toString();
     }
 }
