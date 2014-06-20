@@ -7,16 +7,15 @@ import cassandra.benchmark.service.internal.helper.TimingInterval;
 import cassandra.benchmark.service.internal.model.CommunicationCV;
 import cassandra.benchmark.service.internal.model.IdentityBucketRK;
 import cassandra.benchmark.service.internal.model.Mutation;
+import cassandra.benchmark.service.internal.scenario.CreationContext;
+import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
-import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.SimpleStatement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -47,13 +46,13 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     }
 
     @Override
-    public BenchmarkResult createDatamodel(ScenarioContext context, int replicationFactor) {
+    public BenchmarkResult createDatamodel(CreationContext context) {
 
-        return  super.createDataModel(context, replicationFactor);
+        return  super.createDataModel(context);
     }
 
     @Override
-    public BenchmarkResult executeBenchmark(ScenarioContext context) {
+    public BenchmarkResult executeBenchmark(ExecutionContext context) {
         if(context == null) return null;
 
         exctractParameter(context);
@@ -153,7 +152,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                 "?,?,?,?,?,?,?);");
     }
 
-    private void exctractParameter(final ScenarioContext context) {
+    private void exctractParameter(final ExecutionContext context) {
         if(context.getParameter() == null) return;
 
         this.wideRowCount = extractWideRowCount(context.getParameter());

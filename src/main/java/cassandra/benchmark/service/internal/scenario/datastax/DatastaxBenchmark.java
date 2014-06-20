@@ -4,18 +4,14 @@ import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
-import cassandra.benchmark.service.internal.model.Mutation;
-import cassandra.benchmark.service.internal.scenario.ScenarioContext;
+import cassandra.benchmark.service.internal.scenario.CreationContext;
+import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
-import com.google.common.collect.ImmutableMap;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.sql.PreparedStatement;
 
 /**
  * Created by cosh on 02.06.14.
@@ -26,7 +22,7 @@ public abstract class DatastaxBenchmark {
     protected Cluster cluster;
     protected Session session;
 
-    protected void initializeForBenchMarkDefault(final ScenarioContext context)
+    protected void initializeForBenchMarkDefault(final ExecutionContext context)
     {
         cluster = connect(context.getSeedNode(), context.getPort(), context.getClusterName());
         session = cluster.connect();
@@ -49,7 +45,7 @@ public abstract class DatastaxBenchmark {
         cluster.close();
     }
 
-    protected BenchmarkResult createDataModel(final ScenarioContext context, final int replicationFactor) {
+    protected BenchmarkResult createDataModel(final CreationContext context) {
 
         initializeForBenchMarkDefault(context);
 
@@ -61,10 +57,10 @@ public abstract class DatastaxBenchmark {
 
             executeStatement(session,
                     "CREATE KEYSPACE IF NOT EXISTS " + Constants.keyspaceName + " WITH replication " +
-                            "= {'class':'SimpleStrategy', 'replication_factor':" + replicationFactor + "};");
+                            "= {'class':'SimpleStrategy', 'replication_factor':" + context.getReplicatioFactor() + "};");
 
             long measure1 = System.nanoTime()-startTime;
-            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
+            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, context.getReplicatioFactor());
 
             executeStatement(session,
                     "CREATE TABLE IF NOT EXISTS " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +

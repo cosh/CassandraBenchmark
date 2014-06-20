@@ -6,7 +6,8 @@ import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
 import cassandra.benchmark.service.internal.model.CommunicationCV;
 import cassandra.benchmark.service.internal.model.IdentityBucketRK;
-import cassandra.benchmark.service.internal.scenario.ScenarioContext;
+import cassandra.benchmark.service.internal.scenario.CreationContext;
+import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.astyanax.AstyanaxContext;
@@ -54,7 +55,7 @@ public abstract class AstyanaxBenchmark {
     private String cassandraVersion = "1.2";
     private int connectTimeout = ConnectionPoolConfigurationImpl.DEFAULT_CONNECT_TIMEOUT;
 
-    protected void initializeCluster(final ScenarioContext context, final String keyspaceName) {
+    protected void initializeCluster(final ExecutionContext context, final String keyspaceName) {
         this.astyanaxContext = initializeContext(context, keyspaceName);
         this.astyanaxContext.start();
         this.cluster = astyanaxContext.getClient();
@@ -66,7 +67,7 @@ public abstract class AstyanaxBenchmark {
         keyspace = null;
     }
 
-    protected void initializeForBenchMarkDefault(final ScenarioContext context)
+    protected void initializeForBenchMarkDefault(final ExecutionContext context)
     {
         initializeCluster(context, Constants.keyspaceName);
         getKeySpace(Constants.keyspaceName);
@@ -151,7 +152,7 @@ public abstract class AstyanaxBenchmark {
         return keyspaceExists;
     }
 
-    private AstyanaxContext<Cluster> initializeContext(final ScenarioContext context, final String keyspaceName) {
+    private AstyanaxContext<Cluster> initializeContext(final ExecutionContext context, final String keyspaceName) {
 
         /* Will resort hosts per token partition every 10 seconds */
         final int updateInterval = 10000;
@@ -199,7 +200,7 @@ public abstract class AstyanaxBenchmark {
                 .buildCluster(ThriftFamilyFactory.getInstance());
     }
 
-    protected BenchmarkResult createDefaultDatamodel(ScenarioContext context, int replicationFactor)
+    protected BenchmarkResult createDefaultDatamodel(CreationContext context)
     {
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
@@ -208,9 +209,9 @@ public abstract class AstyanaxBenchmark {
             Long[] measures = new Long[2];
 
             initializeCluster(context, Constants.keyspaceName);
-            getOrCreateKeyspace(Constants.keyspaceName, "SimpleStrategy", replicationFactor);
+            getOrCreateKeyspace(Constants.keyspaceName, "SimpleStrategy", context.getReplicatioFactor());
             Long measure1 = System.nanoTime() -startTime;
-            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
+            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, context.getReplicatioFactor());
 
             try {
                 keyspace.createColumnFamily(model, ImmutableMap.<String, Object>builder()

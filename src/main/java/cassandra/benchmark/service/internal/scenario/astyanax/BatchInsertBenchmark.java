@@ -1,14 +1,14 @@
 package cassandra.benchmark.service.internal.scenario.astyanax;
 
-import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
 import cassandra.benchmark.service.internal.model.CommunicationCV;
 import cassandra.benchmark.service.internal.model.IdentityBucketRK;
 import cassandra.benchmark.service.internal.model.Mutation;
+import cassandra.benchmark.service.internal.scenario.CreationContext;
+import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
-import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
@@ -46,13 +45,13 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
     }
 
     @Override
-    public BenchmarkResult createDatamodel(ScenarioContext context, int replicationFactor) {
+    public BenchmarkResult createDatamodel(CreationContext context) {
 
-        return super.createDefaultDatamodel(context, replicationFactor);
+        return super.createDefaultDatamodel(context);
     }
 
     @Override
-    public BenchmarkResult executeBenchmark(ScenarioContext context) {
+    public BenchmarkResult executeBenchmark(ExecutionContext context) {
         if(context == null) return null;
 
         exctractParameter(context);
@@ -128,7 +127,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         return System.nanoTime() - startTime;
     }
 
-    private void exctractParameter(final ScenarioContext context) {
+    private void exctractParameter(final ExecutionContext context) {
         if(context.getParameter() == null) return;
 
         this.wideRowCount = extractWideRowCount(context.getParameter());

@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public class ScenarioPluginManagerSimpleImpl implements ScenarioPluginManager {
     @Override
-    public Map<String, Scenario> getAvailableScenarios() {
+    public Map<String, Scenario> getAllAvailableScenarios() {
         Map<String, Scenario> result = new HashMap<String, Scenario>();
 
         cassandra.benchmark.service.internal.scenario.astyanax.BatchInsertAsyncBenchmark batchInsertAsyncBenchmarkAstyanax = new cassandra.benchmark.service.internal.scenario.astyanax.BatchInsertAsyncBenchmark();
@@ -18,11 +18,27 @@ public class ScenarioPluginManagerSimpleImpl implements ScenarioPluginManager {
         cassandra.benchmark.service.internal.scenario.astyanax.BatchInsertBenchmark batchInsertBenchmarkAstyanax = new cassandra.benchmark.service.internal.scenario.astyanax.BatchInsertBenchmark();
         cassandra.benchmark.service.internal.scenario.datastax.BatchInsertBenchmark batchInsertBenchmarkDatastax = new cassandra.benchmark.service.internal.scenario.datastax.BatchInsertBenchmark();
 
-        result.put(batchInsertAsyncBenchmarkAstyanax.getName(), batchInsertAsyncBenchmarkAstyanax);
-        result.put(batchInsertAsyncBenchmarkDatastax.getName(), batchInsertAsyncBenchmarkDatastax);
-        result.put(batchInsertBenchmarkAstyanax.getName(), batchInsertBenchmarkAstyanax);
-        result.put(batchInsertBenchmarkDatastax.getName(), batchInsertBenchmarkDatastax);
+        result.put(batchInsertAsyncBenchmarkAstyanax.getName().toLowerCase(), batchInsertAsyncBenchmarkAstyanax);
+        result.put(batchInsertAsyncBenchmarkDatastax.getName().toLowerCase(), batchInsertAsyncBenchmarkDatastax);
+        result.put(batchInsertBenchmarkAstyanax.getName().toLowerCase(), batchInsertBenchmarkAstyanax);
+        result.put(batchInsertBenchmarkDatastax.getName().toLowerCase(), batchInsertBenchmarkDatastax);
 
         return result;
+    }
+
+    @Override
+    public boolean tryGetScenario(Scenario scenario,final String name) {
+
+        final Map<String, Scenario> allAvailableScenarios = getAllAvailableScenarios();
+
+        if(allAvailableScenarios.containsKey(name.toLowerCase()))
+        {
+            scenario = allAvailableScenarios.get(name.toLowerCase());
+
+            return true;
+        }
+
+        scenario = null;
+        return false;
     }
 }
