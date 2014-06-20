@@ -38,6 +38,13 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     private static Integer wideRowCount = 100;
     private static Integer batchSize = 100;
 
+    private static String name = "astyanaxBatchInsertAsync";
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
     @Override
     public BenchmarkResult createDatamodel(ScenarioContext context, int replicationFactor) {
 
@@ -60,7 +67,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
             super.initializeForBenchMarkDefault(context);
 
             final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
-            final long[] measures = new long[numberOfBatches];
+            final Long[] measures = new Long[numberOfBatches];
             final Random prng = new Random();
 
             int currentColumnCount = 0;

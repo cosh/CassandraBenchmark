@@ -57,7 +57,7 @@ public abstract class DatastaxBenchmark {
         TimingInterval ti = new TimingInterval(startTime);
 
         try {
-            long[] measures = new long[2];
+            Long[] measures = new Long[2];
 
             executeStatement(session,
                     "CREATE KEYSPACE IF NOT EXISTS " + Constants.keyspaceName + " WITH replication " +

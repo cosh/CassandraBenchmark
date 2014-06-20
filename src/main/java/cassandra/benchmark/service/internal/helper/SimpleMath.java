@@ -6,7 +6,7 @@ import java.util.Arrays;
  * Created by cosh on 02.06.14.
  */
 public class SimpleMath {
-    public static long getTotal(long[] samples) {
+    public static long getTotal(Long[] samples) {
         if (samples.length == 0) {
             return 0;
         }
@@ -16,7 +16,7 @@ public class SimpleMath {
         return samples[samples.length - 1];
     }
 
-    public static long getMax(long[] samples) {
+    public static long getMax(Long[] samples) {
         if (samples.length == 0) {
             return 0;
         }

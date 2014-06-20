@@ -205,11 +205,11 @@ public abstract class AstyanaxBenchmark {
         TimingInterval ti = new TimingInterval(startTime);
 
         try {
-            long[] measures = new long[2];
+            Long[] measures = new Long[2];
 
             initializeCluster(context, Constants.keyspaceName);
             getOrCreateKeyspace(Constants.keyspaceName, "SimpleStrategy", replicationFactor);
-            long measure1 = System.nanoTime() -startTime;
+            Long measure1 = System.nanoTime() -startTime;
             logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
 
             try {

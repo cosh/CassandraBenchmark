@@ -32,17 +32,17 @@ import java.util.Random;
 public final class SampleOfLongs {
 
     // nanos
-    final long[] sample;
+    final Long[] sample;
 
     // probability with which each sample was selected
     final double p;
 
-    public SampleOfLongs(long[] sample, int p) {
+    public SampleOfLongs(Long[] sample, int p) {
         this.sample = sample;
         this.p = 1 / (float) p;
     }
 
-    SampleOfLongs(long[] sample, double p) {
+    SampleOfLongs(Long[] sample, double p) {
         this.sample = sample;
         this.p = p;
     }
@@ -54,10 +54,10 @@ public final class SampleOfLongs {
             maxLength += sampleOfLongs.sample.length;
             targetp = Math.min(targetp, sampleOfLongs.p);
         }
-        long[] sample = new long[maxLength];
+        Long[] sample = new Long[maxLength];
         int count = 0;
         for (SampleOfLongs latencies : merge) {
-            long[] in = latencies.sample;
+            Long[] in = latencies.sample;
             double p = targetp / latencies.p;
             for (int i = 0; i < in.length; i++)
                 if (rnd.nextDouble() < p)
@@ -76,13 +76,13 @@ public final class SampleOfLongs {
         if (maxSamples > sample.length)
             return this;
 
-        long[] sample = this.sample.clone();
+        Long[] sample = this.sample.clone();
         double p = subsample(rnd, maxSamples, sample, sample.length, this.p);
         sample = Arrays.copyOf(sample, maxSamples);
         return new SampleOfLongs(sample, p);
     }
 
-    private static double subsample(Random rnd, int maxSamples, long[] sample, int count, double p) {
+    private static double subsample(Random rnd, int maxSamples, Long[] sample, int count, double p) {
         // want exactly maxSamples, so select random indexes up to maxSamples
         for (int i = 0; i < maxSamples; i++) {
             int take = i + rnd.nextInt(count - i);

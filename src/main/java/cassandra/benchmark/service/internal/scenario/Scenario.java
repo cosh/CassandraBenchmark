@@ -10,6 +10,12 @@ import java.util.List;
  */
 public interface Scenario {
     /**
+     * Returns the name of the scenario
+     * @return The name of the scenario
+     */
+    String getName();
+
+    /**
      * Creates the datamodel
      * @param context the context of this scenario
      * @param replicationFactor The replication factor

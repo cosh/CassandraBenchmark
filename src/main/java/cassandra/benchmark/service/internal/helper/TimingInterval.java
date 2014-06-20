@@ -51,7 +51,7 @@ public final class TimingInterval
         maxLatency = totalLatency = 0;
         keyCount = operationCount = 0;
         pauseStart = pauseLength = 0;
-        sample = new SampleOfLongs(new long[0], 1d);
+        sample = new SampleOfLongs(new Long[0], 1d);
     }
     public TimingInterval(long start, long end, long maxLatency, long pauseStart, long pauseLength, long keyCount, long totalLatency, long operationCount, SampleOfLongs sample)
     {

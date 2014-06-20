@@ -49,7 +49,7 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
         try {
 
             final int numberOfBatches = getNumberOfBatches(numberOfRows, wideRowCount, batchSize);
-            final long[] measures = new long[numberOfBatches];
+            final Long[] measures = new Long[numberOfBatches];
             final Random prng = new Random();
 
             int currentColumnCount = 0;
@@ -114,7 +114,7 @@ public class CassandraBenchmarkServiceImpl implements CassandraBenchmarkService 
         TimingInterval ti = new TimingInterval(startTime);
 
         try {
-            long[] measures = new long[2];
+            Long[] measures = new Long[2];
 
             long measure1 = client.createKeyspace(replicationFactor);
             logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, replicationFactor);
