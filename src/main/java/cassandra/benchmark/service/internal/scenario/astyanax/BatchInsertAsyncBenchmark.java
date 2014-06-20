@@ -10,7 +10,11 @@ import cassandra.benchmark.service.internal.model.Mutation;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.service.internal.scenario.ScenarioContext;
 import cassandra.benchmark.transfer.BenchmarkResult;
+import com.datastax.driver.core.ResultSet;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
 import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
@@ -37,6 +44,9 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     private static Long numberOfRows = 10000L;
     private static Integer wideRowCount = 100;
     private static Integer batchSize = 100;
+
+    private final List<Long> listOfAsyncBatchRequestDuration = new ArrayList<Long>();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     private static String name = "astyanaxBatchInsertAsync";
 
@@ -67,7 +77,6 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
             super.initializeForBenchMarkDefault(context);
 
             final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
-            final Long[] measures = new Long[numberOfBatches];
             final Random prng = new Random();
 
             int currentColumnCount = 0;
@@ -75,6 +84,8 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
             Integer currentBucket = getARandomBucket(prng);
 
             IdentityBucketRK identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
+
+            List<ListenableFuture<OperationResult<Void>>> queries = new ArrayList<ListenableFuture<OperationResult<Void>>>();
 
             for (int i = 0; i < numberOfBatches; i++) {
 
@@ -93,14 +104,29 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
                     currentColumnCount++;
                 }
 
-                measures[i] = executeBatch(mutations);
+                final ListenableFuture<OperationResult<Void>> operationResultListenableFuture = executeBatch(mutations);
+                if(operationResultListenableFuture != null)
+                {
+                    queries.add(operationResultListenableFuture);
+                }
             }
 
+            ListenableFuture<List<OperationResult<Void>>> successfulQueries = Futures.successfulAsList(queries);
+            final List<OperationResult<Void>> operationResults = successfulQueries.get();
+            //so the work is done and we can get the measures;
+
             long endTime = System.nanoTime();
+
+            Long[] measures = new Long[this.listOfAsyncBatchRequestDuration.size()];
+            this.listOfAsyncBatchRequestDuration.toArray(measures); // fill the array
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
             ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getTotal(measures), numberOfBatches, measurements);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         } finally {
             super.teardown();
         }
@@ -108,10 +134,15 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
         return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
     }
 
-    private long executeBatch(final List<Mutation> mutations) {
-        long startTime = System.nanoTime();
+    synchronized
+    private void addBatchResult(final long duration) {
+        this.listOfAsyncBatchRequestDuration.add(duration);
+    }
 
-        MutationBatch batch = super.keyspace.prepareMutationBatch();
+    private ListenableFuture<OperationResult<Void>> executeBatch(final List<Mutation> mutations) {
+        final long startTime = System.nanoTime();
+
+        final MutationBatch batch = super.keyspace.prepareMutationBatch();
 
         for (Mutation aMutation : mutations)
         {
@@ -120,12 +151,22 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
         }
 
         try {
-            batch.executeAsync();
+            final ListenableFuture<OperationResult<Void>> operationResultListenableFuture = batch.executeAsync();
+
+            operationResultListenableFuture.addListener(new Runnable() {
+                public void run() {
+
+                    long endTime = System.nanoTime();
+
+                    addBatchResult(endTime - startTime);
+                }
+            }, executorService);
+
         } catch (ConnectionException e) {
             logger.error("error inserting batch", e);
         }
 
-        return System.nanoTime() - startTime;
+        return null;
     }
 
     private void exctractParameter(final ScenarioContext context) {

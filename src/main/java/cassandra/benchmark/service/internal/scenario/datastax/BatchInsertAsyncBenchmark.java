@@ -79,8 +79,6 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
             IdentityBucketRK identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
 
             List<ListenableFuture<ResultSet>> queries = new ArrayList<ListenableFuture<ResultSet>>();
-            ListenableFuture<List<ResultSet>> successfulQueries = Futures.successfulAsList(queries);
-
 
             for (int i = 0; i < numberOfBatches; i++) {
 
@@ -101,6 +99,8 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
 
                 queries.add(executeBatch(preparedStatement, mutations));
             }
+
+            ListenableFuture<List<ResultSet>> successfulQueries = Futures.successfulAsList(queries);
 
             final List<ResultSet> resultSets = successfulQueries.get();
             //so the work is done and we can get the measures;
