@@ -25,12 +25,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
-import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
-import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumberOfBatches;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractBatchSize;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractWideRowCount;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractnumberOfRowsCount;
+import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
 
 /**
  * Created by cosh on 02.06.14.
@@ -42,11 +38,9 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     private static Long numberOfRows = 10000L;
     private static Integer wideRowCount = 100;
     private static Integer batchSize = 100;
-
+    private static String name = "astyanaxBatchInsertAsync";
     private final List<Long> listOfAsyncBatchRequestDuration = new ArrayList<Long>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
-
-    private static String name = "astyanaxBatchInsertAsync";
 
     @Override
     public String getName() {
@@ -61,7 +55,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
     @Override
     public BenchmarkResult executeBenchmark(ExecutionContext context) {
-        if(context == null) return null;
+        if (context == null) return null;
 
         exctractParameter(context);
 
@@ -103,8 +97,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
                 }
 
                 final ListenableFuture<OperationResult<Void>> operationResultListenableFuture = executeBatch(mutations);
-                if(operationResultListenableFuture != null)
-                {
+                if (operationResultListenableFuture != null) {
                     queries.add(operationResultListenableFuture);
                 }
             }
@@ -142,8 +135,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
         final MutationBatch batch = super.keyspace.prepareMutationBatch();
 
-        for (Mutation aMutation : mutations)
-        {
+        for (Mutation aMutation : mutations) {
             batch.withRow(model, aMutation.getIdentity())
                     .putColumn(aMutation.getTimeStamp(), aMutation.getCommunication(), valueSerializer, 0);
         }
@@ -168,7 +160,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     }
 
     private void exctractParameter(final ExecutionContext context) {
-        if(context.getParameter() == null) return;
+        if (context.getParameter() == null) return;
 
         this.wideRowCount = extractWideRowCount(context.getParameter());
         this.numberOfRows = extractnumberOfRowsCount(context.getParameter());

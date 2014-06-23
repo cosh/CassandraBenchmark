@@ -31,6 +31,7 @@ public class BenchmarkResult {
 
     /**
      * The total number of requests to the database (batch-requests most of the time)
+     *
      * @return The total number of operations
      */
     public long getTotalOps() {
@@ -39,6 +40,7 @@ public class BenchmarkResult {
 
     /**
      * The number of operations (batch-requests) per second)
+     *
      * @return Operations per second
      */
     public double getOps_rate() {
@@ -47,6 +49,7 @@ public class BenchmarkResult {
 
     /**
      * The number of statements per second
+     *
      * @return Statements per second
      */
     public double getStatements_rate() {
@@ -55,6 +58,7 @@ public class BenchmarkResult {
 
     /**
      * The mean latency  of the requests
+     *
      * @return Mean latency
      */
     public double getMeanlatency() {
@@ -63,6 +67,7 @@ public class BenchmarkResult {
 
     /**
      * The median latency of the requests
+     *
      * @return The media latency
      */
     public double getMedianlatency() {
@@ -71,6 +76,7 @@ public class BenchmarkResult {
 
     /**
      * The 95th percentile of the request latency
+     *
      * @return The 95th percentile
      */
     public double getNinetyFiveTh() {
@@ -79,6 +85,7 @@ public class BenchmarkResult {
 
     /**
      * The 99th percentile of the request latency
+     *
      * @return The 99th percentile
      */
     public double getNinetyNineTh() {
@@ -87,6 +94,7 @@ public class BenchmarkResult {
 
     /**
      * Elapsed time in ms
+     *
      * @return Elapsed time in ms
      */
     public double getElapsed() {
@@ -95,6 +103,7 @@ public class BenchmarkResult {
 
     /**
      * The total number of statements
+     *
      * @return The total number of statements
      */
     public long getTotalStatements() {

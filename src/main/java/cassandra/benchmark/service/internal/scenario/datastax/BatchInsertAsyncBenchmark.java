@@ -20,7 +20,9 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -35,11 +37,9 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     private static Long numberOfRows = 10000L;
     private static Integer wideRowCount = 100;
     private static Integer batchSize = 100;
-
+    private static String name = "datastaxBatchInsertAsync";
     private final List<Long> listOfAsyncBatchRequestDuration = new ArrayList<Long>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
-
-    private static String name = "datastaxBatchInsertAsync";
 
     @Override
     public String getName() {
@@ -49,12 +49,12 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     @Override
     public BenchmarkResult createDatamodel(CreationContext context) {
 
-        return  super.createDataModel(context);
+        return super.createDataModel(context);
     }
 
     @Override
     public BenchmarkResult executeBenchmark(ExecutionContext context) {
-        if(context == null) return null;
+        if (context == null) return null;
 
         exctractParameter(context);
 
@@ -130,8 +130,7 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
 
         BatchStatement bs = new BatchStatement();
 
-        for (Mutation aMutation : mutations)
-        {
+        for (Mutation aMutation : mutations) {
             BoundStatement statement = createInsertStatement(aMutation, preparedStatement);
             bs.add(statement);
         }
@@ -167,9 +166,8 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
                 mutation.getCommunication().getDuration());
     }
 
-    private com.datastax.driver.core.PreparedStatement createPreparedStatement()
-    {
-        return  session.prepare("INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
+    private com.datastax.driver.core.PreparedStatement createPreparedStatement() {
+        return session.prepare("INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
                 "identity," +
                 "timeBucket," +
                 "time," +
@@ -182,7 +180,7 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     }
 
     private void exctractParameter(final ExecutionContext context) {
-        if(context.getParameter() == null) return;
+        if (context.getParameter() == null) return;
 
         this.wideRowCount = extractWideRowCount(context.getParameter());
         this.numberOfRows = extractnumberOfRowsCount(context.getParameter());

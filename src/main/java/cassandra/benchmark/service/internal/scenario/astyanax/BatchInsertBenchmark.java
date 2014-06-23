@@ -19,12 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
-import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
-import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumberOfBatches;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractBatchSize;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractWideRowCount;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractnumberOfRowsCount;
+import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
 
 /**
  * Created by cosh on 02.06.14.
@@ -52,7 +48,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
 
     @Override
     public BenchmarkResult executeBenchmark(ExecutionContext context) {
-        if(context == null) return null;
+        if (context == null) return null;
 
         exctractParameter(context);
 
@@ -112,8 +108,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
 
         MutationBatch batch = super.keyspace.prepareMutationBatch();
 
-        for (Mutation aMutation : mutations)
-        {
+        for (Mutation aMutation : mutations) {
             batch.withRow(model, aMutation.getIdentity())
                     .putColumn(aMutation.getTimeStamp(), aMutation.getCommunication(), valueSerializer, 0);
         }
@@ -128,7 +123,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
     }
 
     private void exctractParameter(final ExecutionContext context) {
-        if(context.getParameter() == null) return;
+        if (context.getParameter() == null) return;
 
         this.wideRowCount = extractWideRowCount(context.getParameter());
         this.numberOfRows = extractnumberOfRowsCount(context.getParameter());

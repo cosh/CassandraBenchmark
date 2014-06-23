@@ -20,12 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
-import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
-import static cassandra.benchmark.service.internal.helper.DataGenerator.getNumberOfBatches;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractBatchSize;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractWideRowCount;
-import static cassandra.benchmark.service.internal.helper.ParameterParser.extractnumberOfRowsCount;
+import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
 
 /**
  * Created by cosh on 02.06.14.
@@ -48,12 +44,12 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     @Override
     public BenchmarkResult createDatamodel(CreationContext context) {
 
-        return  super.createDataModel(context);
+        return super.createDataModel(context);
     }
 
     @Override
     public BenchmarkResult executeBenchmark(ExecutionContext context) {
-        if(context == null) return null;
+        if (context == null) return null;
 
         exctractParameter(context);
 
@@ -115,8 +111,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
         BatchStatement bs = new BatchStatement();
 
-        for (Mutation aMutation : mutations)
-        {
+        for (Mutation aMutation : mutations) {
             BoundStatement statement = createInsertStatement(aMutation, preparedStatement);
             bs.add(statement);
         }
@@ -138,9 +133,8 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                 mutation.getCommunication().getDuration());
     }
 
-    private com.datastax.driver.core.PreparedStatement createPreparedStatement()
-    {
-        return  session.prepare("INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
+    private com.datastax.driver.core.PreparedStatement createPreparedStatement() {
+        return session.prepare("INSERT INTO " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
                 "identity," +
                 "timeBucket," +
                 "time," +
@@ -153,7 +147,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     }
 
     private void exctractParameter(final ExecutionContext context) {
-        if(context.getParameter() == null) return;
+        if (context.getParameter() == null) return;
 
         this.wideRowCount = extractWideRowCount(context.getParameter());
         this.numberOfRows = extractnumberOfRowsCount(context.getParameter());

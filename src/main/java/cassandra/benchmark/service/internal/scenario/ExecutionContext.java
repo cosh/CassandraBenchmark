@@ -13,6 +13,9 @@ public class ExecutionContext {
     private Map<String, String> parameter;
     private String benchmarkName;
 
+    public ExecutionContext() {
+    }
+
     public String getSeedNode() {
         return seedNode;
     }
@@ -51,9 +54,6 @@ public class ExecutionContext {
 
     public void setBenchmarkName(String benchmarkName) {
         this.benchmarkName = benchmarkName;
-    }
-
-    public ExecutionContext() {
     }
 
     @Override

@@ -22,39 +22,35 @@ package cassandra.benchmark.service.internal.helper;
  */
 
 
-        import java.util.ArrayList;
-        import java.util.Arrays;
-        import java.util.List;
-        import java.util.Random;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 // represents measurements taken over an interval of time
 // used for both single timer results and merged timer results
-public final class TimingInterval
-{
-    // nanos
-    private final long start;
-    private final long end;
+public final class TimingInterval {
     public final long maxLatency;
     public final long pauseLength;
     public final long pauseStart;
     public final long totalLatency;
-
     // discrete
     public final long keyCount;
     public final long operationCount;
-
     final SampleOfLongs sample;
+    // nanos
+    private final long start;
+    private final long end;
 
-    public TimingInterval(long time)
-    {
+    public TimingInterval(long time) {
         start = end = time;
         maxLatency = totalLatency = 0;
         keyCount = operationCount = 0;
         pauseStart = pauseLength = 0;
         sample = new SampleOfLongs(new Long[0], 1d);
     }
-    public TimingInterval(long start, long end, long maxLatency, long pauseStart, long pauseLength, long keyCount, long totalLatency, long operationCount, SampleOfLongs sample)
-    {
+
+    public TimingInterval(long start, long end, long maxLatency, long pauseStart, long pauseLength, long keyCount, long totalLatency, long operationCount, SampleOfLongs sample) {
         this.start = start;
         this.end = Math.max(end, start);
         this.maxLatency = maxLatency;
@@ -67,23 +63,20 @@ public final class TimingInterval
     }
 
     // merge multiple timer intervals together
-    static TimingInterval merge(Random rnd, List<TimingInterval> intervals, int maxSamples, long start)
-    {
+    static TimingInterval merge(Random rnd, List<TimingInterval> intervals, int maxSamples, long start) {
         int operationCount = 0, keyCount = 0;
         long maxLatency = 0, totalLatency = 0;
         List<SampleOfLongs> latencies = new ArrayList<SampleOfLongs>();
         long end = 0;
         long pauseStart = 0, pauseEnd = Long.MAX_VALUE;
-        for (TimingInterval interval : intervals)
-        {
+        for (TimingInterval interval : intervals) {
             end = Math.max(end, interval.end);
             operationCount += interval.operationCount;
             maxLatency = Math.max(interval.maxLatency, maxLatency);
             totalLatency += interval.totalLatency;
             keyCount += interval.keyCount;
             latencies.addAll(Arrays.asList(interval.sample));
-            if (interval.pauseLength > 0)
-            {
+            if (interval.pauseLength > 0) {
                 pauseStart = Math.max(pauseStart, interval.pauseStart);
                 pauseEnd = Math.min(pauseEnd, interval.pauseStart + interval.pauseLength);
             }
@@ -95,59 +88,48 @@ public final class TimingInterval
 
     }
 
-    public double realOpRate()
-    {
+    public double realOpRate() {
         return operationCount / ((end - start) * 0.000000001d);
     }
 
-    public double adjustedOpRate()
-    {
+    public double adjustedOpRate() {
         return operationCount / ((end - (start + pauseLength)) * 0.000000001d);
     }
 
-    public double keyRate()
-    {
+    public double keyRate() {
         return keyCount / ((end - start) * 0.000000001d);
     }
 
-    public double meanLatency()
-    {
+    public double meanLatency() {
         return (totalLatency / (double) operationCount) * 0.000001d;
     }
 
-    public double maxLatency()
-    {
+    public double maxLatency() {
         return maxLatency * 0.000001d;
     }
 
-    public long runTime()
-    {
+    public long runTime() {
         return (end - start) / 1000000;
     }
 
-    public double medianLatency()
-    {
+    public double medianLatency() {
         return sample.medianLatency();
     }
 
     // 0 < rank < 1
-    public double rankLatency(float rank)
-    {
+    public double rankLatency(float rank) {
         return sample.rankLatency(rank);
     }
 
-    public final long endNanos()
-    {
+    public final long endNanos() {
         return end;
     }
 
-    public final long endMillis()
-    {
+    public final long endMillis() {
         return end / 1000000;
     }
 
-    public long startNanos()
-    {
+    public long startNanos() {
         return start;
     }
 }

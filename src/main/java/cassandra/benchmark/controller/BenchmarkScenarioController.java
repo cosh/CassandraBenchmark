@@ -23,20 +23,17 @@ import cassandra.benchmark.service.internal.scenario.ScenarioPluginManager;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tomcat.util.http.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.Consumes;
-
 @RestController
 public class BenchmarkScenarioController {
 
-    private final ScenarioPluginManager scenarioPluginManager;
     private static Logger logger = LogManager.getLogger(BenchmarkScenarioController.class);
+    private final ScenarioPluginManager scenarioPluginManager;
 
 
     @Autowired
@@ -47,14 +44,12 @@ public class BenchmarkScenarioController {
     @RequestMapping(value = "/scenario/execute", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<BenchmarkResult> executeScenario(
-            final @RequestBody ExecutionContext context)
-    {
+            final @RequestBody ExecutionContext context) {
         Scenario scenario = null;
 
         logger.debug(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
 
-        if(scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName()))
-        {
+        if (scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName())) {
             return new ResponseEntity<BenchmarkResult>(scenario.executeBenchmark(context), HttpStatus.OK);
         }
 
@@ -65,14 +60,12 @@ public class BenchmarkScenarioController {
     @RequestMapping(value = "/scenario/createDatamodel", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<BenchmarkResult> createDatamodelForScenario(
-            final @RequestBody CreationContext context)
-    {
+            final @RequestBody CreationContext context) {
         Scenario scenario = null;
 
         logger.debug(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
 
-        if(scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName()))
-        {
+        if (scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName())) {
             return new ResponseEntity<BenchmarkResult>(scenario.createDatamodel(context), HttpStatus.OK);
         }
 

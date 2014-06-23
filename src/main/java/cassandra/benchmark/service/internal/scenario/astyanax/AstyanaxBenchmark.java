@@ -30,23 +30,28 @@ import org.apache.logging.log4j.Logger;
  * Created by cosh on 02.06.14.
  */
 public abstract class AstyanaxBenchmark {
+    protected final static AnnotatedCompositeSerializer<IdentityBucketRK> identityBucketSerializer = new AnnotatedCompositeSerializer<IdentityBucketRK>(
+            IdentityBucketRK.class);
+    protected static final com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long> model =
+            new com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long>(
+                    Constants.tableNameThrift,
+                    identityBucketSerializer,
+                    new LongSerializer());
+    protected final static AnnotatedCompositeSerializer<CommunicationCV> valueSerializer = new AnnotatedCompositeSerializer<CommunicationCV>(
+            CommunicationCV.class);
     private static Logger logger = LogManager.getLogger(AstyanaxBenchmark.class);
-
     /**
      * cluster object
      */
     protected Cluster cluster;
-
     /**
      * keyspace within cluster
      */
     protected Keyspace keyspace;
-
     /**
      * This object tracks the context of an astyanax instance of either a Cluster or Keyspace
      */
     protected AstyanaxContext<Cluster> astyanaxContext;
-
     private int initConnectionsPerHost = 10;
     private int maxConnectionsPerHost = 3;
     /**
@@ -67,15 +72,13 @@ public abstract class AstyanaxBenchmark {
         keyspace = null;
     }
 
-    protected void initializeForBenchMarkDefault(final ExecutionContext context)
-    {
+    protected void initializeForBenchMarkDefault(final ExecutionContext context) {
         initializeCluster(context, Constants.keyspaceName);
         getKeySpace(Constants.keyspaceName);
     }
 
     protected void getOrCreateKeyspace(String keyspaceName, String simpleStrategy, int replicationFactor) {
-        if (!keySpaceExists(keyspaceName))
-        {
+        if (!keySpaceExists(keyspaceName)) {
             try {
                 createKeyspace_private(keyspaceName, simpleStrategy, replicationFactor);
             } catch (Exception e) {
@@ -200,8 +203,7 @@ public abstract class AstyanaxBenchmark {
                 .buildCluster(ThriftFamilyFactory.getInstance());
     }
 
-    protected BenchmarkResult createDefaultDatamodel(CreationContext context)
-    {
+    protected BenchmarkResult createDefaultDatamodel(CreationContext context) {
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
 
@@ -210,7 +212,7 @@ public abstract class AstyanaxBenchmark {
 
             initializeCluster(context, Constants.keyspaceName);
             getOrCreateKeyspace(Constants.keyspaceName, "SimpleStrategy", context.getReplicatioFactor());
-            Long measure1 = System.nanoTime() -startTime;
+            Long measure1 = System.nanoTime() - startTime;
             logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, context.getReplicatioFactor());
 
             try {
@@ -223,7 +225,7 @@ public abstract class AstyanaxBenchmark {
                 logger.error(e);
             }
 
-            long measure2 = System.nanoTime()-startTime - measure1;
+            long measure2 = System.nanoTime() - startTime - measure1;
             logger.debug("Created the table {0} in keyspace {1}.", Constants.tableNameCQL, Constants.keyspaceName);
 
             long endTime = System.nanoTime();
@@ -240,17 +242,4 @@ public abstract class AstyanaxBenchmark {
 
         return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
     }
-
-    protected final static AnnotatedCompositeSerializer<IdentityBucketRK> identityBucketSerializer = new AnnotatedCompositeSerializer<IdentityBucketRK>(
-            IdentityBucketRK.class);
-
-    protected final static AnnotatedCompositeSerializer<CommunicationCV> valueSerializer = new AnnotatedCompositeSerializer<CommunicationCV>(
-            CommunicationCV.class);
-
-
-    protected static final com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long> model =
-            new com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long>(
-                    Constants.tableNameThrift,
-                    identityBucketSerializer,
-                    new LongSerializer());
 }

@@ -22,13 +22,7 @@ public abstract class DatastaxBenchmark {
     protected Cluster cluster;
     protected Session session;
 
-    protected void initializeForBenchMarkDefault(final ExecutionContext context)
-    {
-        cluster = connect(context.getSeedNode(), context.getPort(), context.getClusterName());
-        session = cluster.connect();
-    }
-
-    protected static Cluster connect(final String node, final int port,  final String clusterName) {
+    protected static Cluster connect(final String node, final int port, final String clusterName) {
         final Cluster cluster = Cluster.builder()
                 .addContactPoint(node)
                 .withClusterName(clusterName)
@@ -39,6 +33,16 @@ public abstract class DatastaxBenchmark {
         return cluster;
     }
 
+    private static long executeStatement(final Session session, final String statement) {
+        long startTime = System.nanoTime();
+        session.execute(statement);
+        return System.nanoTime() - startTime;
+    }
+
+    protected void initializeForBenchMarkDefault(final ExecutionContext context) {
+        cluster = connect(context.getSeedNode(), context.getPort(), context.getClusterName());
+        session = cluster.connect();
+    }
 
     protected void teardown() {
         session.close();
@@ -57,9 +61,10 @@ public abstract class DatastaxBenchmark {
 
             executeStatement(session,
                     "CREATE KEYSPACE IF NOT EXISTS " + Constants.keyspaceName + " WITH replication " +
-                            "= {'class':'SimpleStrategy', 'replication_factor':" + context.getReplicatioFactor() + "};");
+                            "= {'class':'SimpleStrategy', 'replication_factor':" + context.getReplicatioFactor() + "};"
+            );
 
-            long measure1 = System.nanoTime()-startTime;
+            long measure1 = System.nanoTime() - startTime;
             logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, context.getReplicatioFactor());
 
             executeStatement(session,
@@ -72,9 +77,10 @@ public abstract class DatastaxBenchmark {
                             "bparty text," +
                             "duration float," +
                             "primary key((identity, timeBucket), time)" +
-                            ");");
+                            ");"
+            );
 
-            long measure2 = System.nanoTime()-startTime-measure1;
+            long measure2 = System.nanoTime() - startTime - measure1;
             logger.debug("Created the table {0} in keyspace {1}.", Constants.tableNameCQL, Constants.keyspaceName);
 
             long endTime = System.nanoTime();
@@ -90,11 +96,5 @@ public abstract class DatastaxBenchmark {
         }
 
         return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
-    }
-
-    private static long executeStatement(final Session session, final String statement) {
-        long startTime = System.nanoTime();
-        session.execute(statement);
-        return System.nanoTime() - startTime;
     }
 }

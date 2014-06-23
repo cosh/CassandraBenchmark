@@ -72,16 +72,6 @@ public final class SampleOfLongs {
         return new SampleOfLongs(sample, targetp);
     }
 
-    public SampleOfLongs subsample(Random rnd, int maxSamples) {
-        if (maxSamples > sample.length)
-            return this;
-
-        Long[] sample = this.sample.clone();
-        double p = subsample(rnd, maxSamples, sample, sample.length, this.p);
-        sample = Arrays.copyOf(sample, maxSamples);
-        return new SampleOfLongs(sample, p);
-    }
-
     private static double subsample(Random rnd, int maxSamples, Long[] sample, int count, double p) {
         // want exactly maxSamples, so select random indexes up to maxSamples
         for (int i = 0; i < maxSamples; i++) {
@@ -95,6 +85,16 @@ public final class SampleOfLongs {
         // so multiply p by this probability
         p *= maxSamples / (double) sample.length;
         return p;
+    }
+
+    public SampleOfLongs subsample(Random rnd, int maxSamples) {
+        if (maxSamples > sample.length)
+            return this;
+
+        Long[] sample = this.sample.clone();
+        double p = subsample(rnd, maxSamples, sample, sample.length, this.p);
+        sample = Arrays.copyOf(sample, maxSamples);
+        return new SampleOfLongs(sample, p);
     }
 
     public double medianLatency() {

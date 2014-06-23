@@ -3,7 +3,6 @@ package cassandra.benchmark.service.internal.helper;
 import cassandra.benchmark.service.internal.Constants;
 
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Created by cosh on 02.06.14.
@@ -11,8 +10,7 @@ import java.util.Random;
 public class ParameterParser {
     public static Integer extractBatchSize(final Map<String, String> parameter) {
         String extractedParameterString = extractParameterString(parameter, Constants.batchSizeString);
-        if(extractedParameterString != null)
-        {
+        if (extractedParameterString != null) {
             return Integer.parseInt((extractedParameterString));
         }
 
@@ -20,10 +18,8 @@ public class ParameterParser {
     }
 
     private static String extractParameterString(Map<String, String> parameters, String interestingElement) {
-        if(interestingElement != null)
-        {
-            if(parameters.containsKey(interestingElement))
-            {
+        if (interestingElement != null) {
+            if (parameters.containsKey(interestingElement)) {
                 return parameters.get(interestingElement);
             }
         }
@@ -33,8 +29,7 @@ public class ParameterParser {
 
     public static Long extractnumberOfRowsCount(final Map<String, String> parameter) {
         String extractedParameterString = extractParameterString(parameter, Constants.rowCountString);
-        if(extractedParameterString != null)
-        {
+        if (extractedParameterString != null) {
             return Long.parseLong((extractedParameterString));
         }
 
@@ -43,8 +38,7 @@ public class ParameterParser {
 
     public static Integer extractWideRowCount(final Map<String, String> parameter) {
         String extractedParameterString = extractParameterString(parameter, Constants.wideRowCountString);
-        if(extractedParameterString != null)
-        {
+        if (extractedParameterString != null) {
             return Integer.parseInt((extractedParameterString));
         }
 

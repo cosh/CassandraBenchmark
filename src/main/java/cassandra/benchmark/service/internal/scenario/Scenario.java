@@ -8,12 +8,14 @@ import cassandra.benchmark.transfer.BenchmarkResult;
 public interface Scenario {
     /**
      * Returns the name of the scenario
+     *
      * @return The name of the scenario
      */
     String getName();
 
     /**
      * Creates the datamodel
+     *
      * @param context the context of this scenario
      * @return time to execute the request in ms
      */
@@ -21,6 +23,7 @@ public interface Scenario {
 
     /**
      * Executes a mutation/statement
+     *
      * @param context the context of this scenario
      * @return time to execute the request (batch of mutations) in ms
      */

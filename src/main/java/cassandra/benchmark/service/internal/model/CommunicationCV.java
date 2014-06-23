@@ -19,8 +19,7 @@ public class CommunicationCV {
     @Component(ordinal = 3)
     Double duration;
 
-    public CommunicationCV(final String aParty, final String bParty, final Double duration)
-    {
+    public CommunicationCV(final String aParty, final String bParty, final Double duration) {
         this.aPartyImei = "imei of " + aParty;
         this.aPartyImsi = "imsi of " + aParty;
         this.bParty = bParty;
@@ -28,8 +27,7 @@ public class CommunicationCV {
     }
 
 
-    public CommunicationCV()
-    {
+    public CommunicationCV() {
 
     }
 

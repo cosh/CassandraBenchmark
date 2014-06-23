@@ -13,15 +13,13 @@ public class IdentityBucketRK {
     @Component(ordinal = 1)
     private Integer bucket;
 
-    public IdentityBucketRK(final String identity, final Integer bucket)
-    {
+    public IdentityBucketRK(final String identity, final Integer bucket) {
         this.identity = identity;
         this.bucket = bucket;
     }
 
 
-    public IdentityBucketRK()
-    {
+    public IdentityBucketRK() {
 
     }
 
