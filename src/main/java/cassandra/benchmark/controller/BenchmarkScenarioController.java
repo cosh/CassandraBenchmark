@@ -29,18 +29,29 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * A simple REST controller that enables the user to execute certain benchmark scenarios
+ */
 @RestController
 public class BenchmarkScenarioController {
 
-    private static Logger logger = LogManager.getLogger(BenchmarkScenarioController.class);
-    private final ScenarioPluginManager scenarioPluginManager;
+    private final static Logger logger = LogManager.getLogger(BenchmarkScenarioController.class);
 
+    /**
+     * used for finding the desired/available benchmark scenarios
+     */
+    private final ScenarioPluginManager scenarioPluginManager;
 
     @Autowired
     public BenchmarkScenarioController(final ScenarioPluginManager scenarioPluginManager) {
         this.scenarioPluginManager = scenarioPluginManager;
     }
 
+    /**
+     * Executes a benchmark scenario
+     * @param context The context of the scenario
+     * @return The benchmark result
+     */
     @RequestMapping(value = "/scenario/execute", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<BenchmarkResult> executeScenario(
@@ -57,6 +68,11 @@ public class BenchmarkScenarioController {
         return new ResponseEntity<BenchmarkResult>(HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Creates the datamodel for a given benchmark scenario
+     * @param context The context of the scenario
+     * @return The benchmark result
+     */
     @RequestMapping(value = "/scenario/createDatamodel", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<BenchmarkResult> createDatamodelForScenario(

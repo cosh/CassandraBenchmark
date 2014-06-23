@@ -98,7 +98,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getTotal(measures), numberOfBatches, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getSum(measures), numberOfBatches, measurements);
         } finally {
             super.teardown();
         }
@@ -149,7 +149,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     private void exctractParameter(final ExecutionContext context) {
         if (context.getParameter() == null) return;
 
-        this.wideRowCount = extractWideRowCount(context.getParameter());
+        this.wideRowCount = extractColumnCountPerRow(context.getParameter());
         this.numberOfRows = extractnumberOfRowsCount(context.getParameter());
         this.batchSize = extractBatchSize(context.getParameter());
     }

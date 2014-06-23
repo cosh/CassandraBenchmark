@@ -10,6 +10,7 @@ import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,6 +27,7 @@ public abstract class DatastaxBenchmark {
         final Cluster cluster = Cluster.builder()
                 .addContactPoint(node)
                 .withClusterName(clusterName)
+                .withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
                 .build();
         final Metadata metadata = cluster.getMetadata();
         logger.debug("Connected to cluster: %s\n",
@@ -90,7 +92,7 @@ public abstract class DatastaxBenchmark {
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, 2, SimpleMath.getTotal(measures), 2, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, 2, SimpleMath.getSum(measures), 2, measurements);
         } finally {
             teardown();
         }

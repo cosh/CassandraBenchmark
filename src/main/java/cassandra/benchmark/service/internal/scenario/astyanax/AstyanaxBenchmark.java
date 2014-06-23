@@ -235,7 +235,7 @@ public abstract class AstyanaxBenchmark {
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
-            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, 2, SimpleMath.getTotal(measures), 2, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, 2, SimpleMath.getSum(measures), 2, measurements);
         } finally {
             teardown();
         }
