@@ -124,7 +124,11 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
         super.session.execute(bs);
 
-        return System.nanoTime() - startTime;
+        long timeSpan = (System.nanoTime() - startTime);
+
+        logger.info(String.format("Inserted %d statements in one batch in %f ms.", mutations.size(), timeSpan * 0.000000001d));
+
+        return timeSpan;
     }
 
     private BoundStatement createInsertStatement(final Mutation mutation, final com.datastax.driver.core.PreparedStatement preparedStatement) {

@@ -154,6 +154,7 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     synchronized
     private void addBatchResult(final long duration) {
         this.listOfAsyncBatchRequestDuration.add(duration);
+        logger.info(String.format("Inserted one async batch in %f ms.", duration * 0.000000001d));
     }
 
     private BoundStatement createInsertStatement(final Mutation mutation, final com.datastax.driver.core.PreparedStatement preparedStatement) {

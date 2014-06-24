@@ -135,6 +135,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     synchronized
     private void addBatchResult(final long duration) {
         this.listOfAsyncBatchRequestDuration.add(duration);
+        logger.info(String.format("Inserted one async batch in %f ms.", duration * 0.000000001d));
     }
 
     private ListenableFuture<OperationResult<Void>> executeBatch(final List<Mutation> mutations) {

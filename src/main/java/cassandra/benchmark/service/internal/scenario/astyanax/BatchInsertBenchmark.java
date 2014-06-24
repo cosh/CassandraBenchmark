@@ -125,7 +125,11 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
             logger.error("error inserting batch", e);
         }
 
-        return System.nanoTime() - startTime;
+        long timeSpan = (System.nanoTime() - startTime);
+
+        logger.info(String.format("Inserted %d statements in one batch in %f ms.", mutations.size(), timeSpan * 0.000000001d));
+
+        return timeSpan;
     }
 
     private void exctractParameter(final ExecutionContext context) {
