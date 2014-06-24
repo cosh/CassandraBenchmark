@@ -14,12 +14,11 @@ public interface ScenarioPluginManager {
     Map<String, Scenario> getAllAvailableScenarios();
 
     /**
-     * Tries to get a scenario
+     * Gets a scenario
      *
-     * @param scenario The scenario if it's available, otherwise null
-     * @param name     The name of the scenario
-     * @return True for success otherwise false
+     * @param name The Name of the scenario
+     * @return The scenario if it's available, otherwise null
      */
-    boolean tryGetScenario(Scenario scenario, final String name);
+    Scenario tryGetScenario(final String name);
 
 }

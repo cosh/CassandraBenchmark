@@ -11,14 +11,14 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Created by cosh on 02.06.14.
  */
 public abstract class DatastaxBenchmark {
-    private static Logger logger = LogManager.getLogger(DatastaxBenchmark.class);
+    static Log logger = LogFactory.getLog(DatastaxBenchmark.class.getName());
 
     protected Cluster cluster;
     protected Session session;
@@ -30,8 +30,8 @@ public abstract class DatastaxBenchmark {
                 .withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
                 .build();
         final Metadata metadata = cluster.getMetadata();
-        logger.debug("Connected to cluster: %s\n",
-                metadata.getClusterName());
+        logger.info(String.format("Connected to cluster: %s\n",
+                metadata.getClusterName()));
         return cluster;
     }
 
@@ -42,8 +42,33 @@ public abstract class DatastaxBenchmark {
     }
 
     protected void initializeForBenchMarkDefault(final ExecutionContext context) {
-        cluster = connect(context.getSeedNode(), context.getPort(), context.getClusterName());
+        String seedNode = context.getSeedNode();
+        Integer port = context.getPort();
+        String clusterName = context.getClusterName();
+
+        if(seedNode == null || seedNode.isEmpty())
+        {
+            seedNode = Constants.defaultSeedNode;
+        }
+
+        if(port.equals(0))
+        {
+            port = Constants.defaultCQLPort;
+        }
+
+        logger.info(String.format("connecting to seed-node: %s, port: %s and clusterName: %s", seedNode, port, clusterName));
+
+        cluster = connect(seedNode, port, clusterName);
         session = cluster.connect();
+    }
+
+    protected static void checkContext(final ExecutionContext context) {
+        if(context.getPort() == 0)
+        {
+            context.setPort(Constants.defaultCQLPort);
+            logger.info(String.format("set cql port to default (%d).", Constants.defaultCQLPort));
+        }
+
     }
 
     protected void teardown() {
@@ -67,7 +92,7 @@ public abstract class DatastaxBenchmark {
             );
 
             long measure1 = System.nanoTime() - startTime;
-            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, context.getReplicatioFactor());
+            logger.info(String.format("Created the keyspace %s with replication factor %d.", Constants.keyspaceName, context.getReplicatioFactor()));
 
             executeStatement(session,
                     "CREATE TABLE IF NOT EXISTS " + Constants.keyspaceName + " ." + Constants.tableNameCQL + " (" +
@@ -77,13 +102,13 @@ public abstract class DatastaxBenchmark {
                             "aPartyImsi text," +
                             "aPartyImei text," +
                             "bparty text," +
-                            "duration float," +
+                            "duration double," +
                             "primary key((identity, timeBucket), time)" +
                             ");"
             );
 
             long measure2 = System.nanoTime() - startTime - measure1;
-            logger.debug("Created the table {0} in keyspace {1}.", Constants.tableNameCQL, Constants.keyspaceName);
+            logger.info(String.format("Created the table %s in keyspace %s.", Constants.tableNameCQL, Constants.keyspaceName));
 
             long endTime = System.nanoTime();
 

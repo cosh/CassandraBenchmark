@@ -14,8 +14,8 @@ import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.*;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
  */
 public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scenario {
 
-    private static Logger logger = LogManager.getLogger(BatchInsertAsyncBenchmark.class);
+    static Log logger = LogFactory.getLog(BatchInsertAsyncBenchmark.class.getName());
 
     private static Long numberOfRows = 10000L;
     private static Integer wideRowCount = 100;
@@ -49,6 +49,8 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     @Override
     public BenchmarkResult createDatamodel(CreationContext context) {
 
+        logger.info(String.format("Creating standard CQL data-model with parameters: %s", context));
+
         return super.createDataModel(context);
     }
 
@@ -58,7 +60,7 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
 
         exctractParameter(context);
 
-        logger.debug(String.format("Executing datastax async batch insert benchmark with the following parameters rowCount:%d, wideRowCount:&d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
+        logger.info(String.format("Executing datastax async batch insert benchmark with the following parameters rowCount:%d, wideRowCount:%d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
 
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
@@ -182,8 +184,23 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     private void exctractParameter(final ExecutionContext context) {
         if (context.getParameter() == null) return;
 
-        this.wideRowCount = extractColumnCountPerRow(context.getParameter());
-        this.numberOfRows = extractnumberOfRowsCount(context.getParameter());
-        this.batchSize = extractBatchSize(context.getParameter());
+        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
+        if(extractedWideRowCount != null)
+        {
+            this.wideRowCount = extractedWideRowCount;
+
+        }
+
+        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
+        if(extractedNumberOfRows != null)
+        {
+            this.numberOfRows = extractedNumberOfRows;
+        }
+
+        Integer extractedBatchSize = extractBatchSize(context.getParameter());
+        if(extractedBatchSize != null)
+        {
+            this.batchSize = extractedBatchSize;
+        }
     }
 }

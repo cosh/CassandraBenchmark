@@ -16,13 +16,14 @@
 
 package cassandra.benchmark.controller;
 
+import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.scenario.CreationContext;
 import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.service.internal.scenario.ScenarioPluginManager;
 import cassandra.benchmark.transfer.BenchmarkResult;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class BenchmarkScenarioController {
 
-    private final static Logger logger = LogManager.getLogger(BenchmarkScenarioController.class);
+    static Log log = LogFactory.getLog(BenchmarkScenarioController.class.getName());
 
     /**
      * used for finding the desired/available benchmark scenarios
@@ -56,15 +57,18 @@ public class BenchmarkScenarioController {
     @ResponseBody
     public ResponseEntity<BenchmarkResult> executeScenario(
             final @RequestBody ExecutionContext context) {
-        Scenario scenario = null;
 
-        logger.debug(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
+        checkContext(context);
 
-        if (scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName())) {
+        log.info(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
+
+        Scenario scenario = scenarioPluginManager.tryGetScenario(context.getBenchmarkName());
+
+        if (scenario != null) {
             return new ResponseEntity<BenchmarkResult>(scenario.executeBenchmark(context), HttpStatus.OK);
         }
 
-        logger.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
+        log.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
         return new ResponseEntity<BenchmarkResult>(HttpStatus.NOT_FOUND);
     }
 
@@ -77,15 +81,42 @@ public class BenchmarkScenarioController {
     @ResponseBody
     public ResponseEntity<BenchmarkResult> createDatamodelForScenario(
             final @RequestBody CreationContext context) {
-        Scenario scenario = null;
 
-        logger.debug(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
+        checkContext(context);
 
-        if (scenarioPluginManager.tryGetScenario(scenario, context.getBenchmarkName())) {
+        if(context.getReplicatioFactor() == 0 )
+        {
+            context.setReplicatioFactor(Constants.defaultReplicationFactor);
+            log.info(String.format("Set replication factor to default(%d)", Constants.defaultReplicationFactor));
+        }
+
+        log.info(String.format("Executing benchmark with name %s and parameters %s", context.getBenchmarkName(), context.toString()));
+
+        Scenario scenario = scenarioPluginManager.tryGetScenario(context.getBenchmarkName());
+
+        if (scenario != null) {
             return new ResponseEntity<BenchmarkResult>(scenario.createDatamodel(context), HttpStatus.OK);
         }
 
-        logger.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
+        log.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
         return new ResponseEntity<BenchmarkResult>(HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Checks the context and if certain properties are not set, the default values are used
+     * @param context The execution context
+     */
+    private static void checkContext(final ExecutionContext context) {
+        if(context.getSeedNode() == null || context.getSeedNode().isEmpty())
+        {
+            context.setSeedNode(Constants.defaultSeedNode);
+            log.info(String.format("Set default seed node to default(%s)", Constants.defaultSeedNode));
+        }
+
+        if(context.getClusterName() == null || context.getClusterName().isEmpty())
+        {
+            context.setClusterName(Constants.defaultClusterName);
+            log.info(String.format("Set default cluster name to default(%s)", Constants.defaultClusterName));
+        }
     }
 }

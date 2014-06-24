@@ -23,8 +23,8 @@ import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.serializers.AnnotatedCompositeSerializer;
 import com.netflix.astyanax.serializers.LongSerializer;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Created by cosh on 02.06.14.
@@ -39,7 +39,8 @@ public abstract class AstyanaxBenchmark {
                     new LongSerializer());
     protected final static AnnotatedCompositeSerializer<CommunicationCV> valueSerializer = new AnnotatedCompositeSerializer<CommunicationCV>(
             CommunicationCV.class);
-    private static Logger logger = LogManager.getLogger(AstyanaxBenchmark.class);
+    static Log log = LogFactory.getLog(AstyanaxBenchmark.class.getName());
+
     /**
      * cluster object
      */
@@ -82,7 +83,7 @@ public abstract class AstyanaxBenchmark {
             try {
                 createKeyspace_private(keyspaceName, simpleStrategy, replicationFactor);
             } catch (Exception e) {
-                logger.error("Could not create keyspace {}. Will try again.", keyspaceName, e);
+                log.error(String.format("Could not create keyspace {}. Will try again.", keyspaceName, e));
 
                 this.keyspace = null;
             }
@@ -91,11 +92,20 @@ public abstract class AstyanaxBenchmark {
         getKeySpace(keyspaceName);
     }
 
+    protected static void checkContext(final ExecutionContext context) {
+        if(context.getPort() == 0)
+        {
+            context.setPort(Constants.defaultThriftPort);
+            log.info(String.format("set thrift port to default (%d).", Constants.defaultThriftPort));
+        }
+
+    }
+
     private void getKeySpace(String keyspaceName) {
         try {
             this.keyspace = cluster.getKeyspace(keyspaceName);
         } catch (ConnectionException e) {
-            logger.error("Could not get keyspace {}. Will try again.", keyspaceName, e);
+            log.error(String.format("Could not get keyspace {}. Will try again.", keyspaceName, e));
             this.keyspace = null;
         }
     }
@@ -111,22 +121,22 @@ public abstract class AstyanaxBenchmark {
         try {
             cluster.addKeyspace(keyspaceDefinition);
         } catch (ConnectionException e) {
-            logger.error("Could not add keyspace.", e);
-            logger.warn(String.format("Starting max %d retries.", retries));
+            log.error("Could not add keyspace.", e);
+            log.warn(String.format("Starting max %d retries.", retries));
             //retry
             Boolean retry = false;
 
             for (int i = 0; i < retries; i++) {
-                logger.info(String.format("Starting retry %d of %d.", i + 1, retries));
+                log.info(String.format("Starting retry %d of %d.", i + 1, retries));
                 try {
                     cluster.addKeyspace(keyspaceDefinition);
                 } catch (final ConnectionException retryException) {
-                    logger.error("Could not add keyspace.", retryException);
+                    log.error("Could not add keyspace.", retryException);
                     retry = true;
                 }
 
                 if (!retry) {
-                    logger.info(String.format("Cassandra cluster was available in try %d of %d.", i + 1, retries));
+                    log.info(String.format("Cassandra cluster was available in try %d of %d.", i + 1, retries));
                     return;
                 }
             }
@@ -134,7 +144,7 @@ public abstract class AstyanaxBenchmark {
             throw new Exception(String.format("Could not create keyspace %s after %d retries.", keyspaceName, retries));
         }
 
-        logger.info("Created keyspace " + keyspaceName);
+        log.info("Created keyspace " + keyspaceName);
     }
 
     private boolean keySpaceExists(String keyspaceName) {
@@ -213,20 +223,20 @@ public abstract class AstyanaxBenchmark {
             initializeCluster(context, Constants.keyspaceName);
             getOrCreateKeyspace(Constants.keyspaceName, "SimpleStrategy", context.getReplicatioFactor());
             Long measure1 = System.nanoTime() - startTime;
-            logger.debug("Created the keyspace {0} with replication factor {1}.", Constants.keyspaceName, context.getReplicatioFactor());
+            log.info(String.format("Created the keyspace %s with replication factor %s.", Constants.keyspaceName, context.getReplicatioFactor()));
 
             try {
                 keyspace.createColumnFamily(model, ImmutableMap.<String, Object>builder()
-                        .put("default_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.DoubleType)")
-                        .put("key_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.LongType)")
+                        .put("default_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.DoubleType)")
+                        .put("key_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.IntegerType)")
                         .put("comparator_type", "LongType")
                         .build());
             } catch (ConnectionException e) {
-                logger.error(e);
+                log.error(e);
             }
 
             long measure2 = System.nanoTime() - startTime - measure1;
-            logger.debug("Created the table {0} in keyspace {1}.", Constants.tableNameCQL, Constants.keyspaceName);
+            log.info(String.format("Created the table %s in keyspace %s.", Constants.tableNameCQL, Constants.keyspaceName));
 
             long endTime = System.nanoTime();
 

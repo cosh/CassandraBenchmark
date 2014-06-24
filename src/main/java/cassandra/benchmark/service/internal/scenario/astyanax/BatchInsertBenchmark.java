@@ -12,8 +12,8 @@ import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
  */
 public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario {
 
-    private static Logger logger = LogManager.getLogger(BatchInsertBenchmark.class);
+    static Log logger = LogFactory.getLog(BatchInsertBenchmark.class.getName());
 
     private static Long numberOfRows = 10000L;
     private static Integer wideRowCount = 100;
@@ -43,6 +43,10 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
     @Override
     public BenchmarkResult createDatamodel(CreationContext context) {
 
+        super.checkContext(context);
+
+        logger.info(String.format("Creating standard data-model with parameters: %s", context));
+
         return super.createDefaultDatamodel(context);
     }
 
@@ -50,9 +54,11 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
     public BenchmarkResult executeBenchmark(ExecutionContext context) {
         if (context == null) return null;
 
+        super.checkContext(context);
+
         exctractParameter(context);
 
-        logger.debug(String.format("Executing astyanax batch insert benchmark with the following parameters rowCount:%d, wideRowCount:&d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
+        logger.info(String.format("Executing astyanax batch insert benchmark with the following parameters rowCount:%d, wideRowCount:%d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
 
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
@@ -125,8 +131,23 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
     private void exctractParameter(final ExecutionContext context) {
         if (context.getParameter() == null) return;
 
-        this.wideRowCount = extractColumnCountPerRow(context.getParameter());
-        this.numberOfRows = extractnumberOfRowsCount(context.getParameter());
-        this.batchSize = extractBatchSize(context.getParameter());
+        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
+        if(extractedWideRowCount != null)
+        {
+            this.wideRowCount = extractedWideRowCount;
+
+        }
+
+        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
+        if(extractedNumberOfRows != null)
+        {
+            this.numberOfRows = extractedNumberOfRows;
+        }
+
+        Integer extractedBatchSize = extractBatchSize(context.getParameter());
+        if(extractedBatchSize != null)
+        {
+            this.batchSize = extractedBatchSize;
+        }
     }
 }

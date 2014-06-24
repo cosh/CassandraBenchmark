@@ -2,6 +2,7 @@ package cassandra.benchmark.service.internal.helper;
 
 import cassandra.benchmark.service.internal.Constants;
 
+import java.awt.*;
 import java.util.Map;
 
 /**
