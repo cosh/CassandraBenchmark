@@ -18,4 +18,5 @@ public class Constants {
     public static int defaultReplicationFactor = 3;
     public static Integer defaultBatchSize = 100;
     public static Long defaultRowCount = 10000L;
+    public static Integer defaultColumnCount = 100;
 }

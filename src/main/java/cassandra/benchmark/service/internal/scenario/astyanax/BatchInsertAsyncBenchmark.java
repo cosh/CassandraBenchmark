@@ -1,5 +1,6 @@
 package cassandra.benchmark.service.internal.scenario.astyanax;
 
+import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
@@ -24,6 +25,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -35,13 +37,13 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
     static Log logger = LogFactory.getLog(BatchInsertAsyncBenchmark.class.getName());
 
-
-    private static Long numberOfRows = 10000L;
-    private static Integer wideRowCount = 100;
-    private static Integer batchSize = 100;
     private static String name = "astyanaxBatchInsertAsync";
     private final List<Long> listOfAsyncBatchRequestDuration = new ArrayList<Long>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+    private Integer wideRowCount = Constants.defaultColumnCount;
+    private Long numberOfRows = Constants.defaultRowCount;
+    private Integer batchSize = Constants.defaultBatchSize;
 
     @Override
     public String getName() {
@@ -135,7 +137,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     synchronized
     private void addBatchResult(final long duration) {
         this.listOfAsyncBatchRequestDuration.add(duration);
-        logger.info(String.format("Inserted one async batch in %f ms.", duration * 0.000000001d));
+        logger.info(String.format("Inserted one async batch in %d ms.", TimeUnit.MILLISECONDS.convert(duration, TimeUnit.NANOSECONDS)));
     }
 
     private ListenableFuture<OperationResult<Void>> executeBatch(final List<Mutation> mutations) {

@@ -19,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -30,11 +31,10 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
     static Log logger = LogFactory.getLog(BatchInsertBenchmark.class.getName());
 
-    private static Long numberOfRows = 10000L;
-    private static Integer wideRowCount = 100;
-    private static Integer batchSize = 100;
-
     private static String name = "datastaxBatchInsert";
+    private Integer wideRowCount = Constants.defaultColumnCount;
+    private Long numberOfRows = Constants.defaultRowCount;
+    private Integer batchSize = Constants.defaultBatchSize;
 
     @Override
     public String getName() {
@@ -126,7 +126,7 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
         long timeSpan = (System.nanoTime() - startTime);
 
-        logger.info(String.format("Inserted %d statements in one batch in %f ms.", mutations.size(), timeSpan * 0.000000001d));
+        logger.info(String.format("Inserted %d statements in one batch in %d ms.", mutations.size(), TimeUnit.MILLISECONDS.convert(timeSpan, TimeUnit.NANOSECONDS)));
 
         return timeSpan;
     }
