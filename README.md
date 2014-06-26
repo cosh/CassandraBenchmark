@@ -15,11 +15,6 @@ curl -H "Content-Type: application/json" -d '{"benchmarkName":"astyanaxBatchInse
 Execution
 ---------
 
-curl -H "Content-Type: application/json" -d '{"benchmarkName":"datastaxBatchInsert", "seedNode":"internalIPOfSeedNodeInSameZone", "parameter": {"batchSize":"1000", "rowCount": "1000000"}}' http://127.0.0.1:8080/scenario/execute
+curl -H "Content-Type: application/json" -d '{"benchmarkName":"datastaxBatchInsert", "seedNode":"internalIPOfSeedNodeInSameZone", "parameter": {"batchSize":"100", "rowCount": "100000"}}' http://127.0.0.1:8080/scenario/execute
 
-curl -H "Content-Type: application/json" -d '{"benchmarkName":"datastaxBatchInsertAsync", "seedNode":"internalIPOfSeedNodeInSameZone", "parameter": {"batchSize":"1000", "rowCount": "1000000"}}' http://127.0.0.1:8080/scenario/execute
-
-curl -H "Content-Type: application/json" -d '{"benchmarkName":"astyanaxBatchInsert", "seedNode":"internalIPOfSeedNodeInSameZone", "parameter": {"batchSize":"1000", "rowCount": "1000000"}}' http://127.0.0.1:8080/scenario/execute
-
-curl -H "Content-Type: application/json" -d '{"benchmarkName":"astyanaxBatchInsertAsync", "seedNode":"internalIPOfSeedNodeInSameZone", "parameter": {"batchSize":"1000", "rowCount": "1000000"}}' http://127.0.0.1:8080/scenario/execute
-
+curl -H "Content-Type: application/json" -d '{"benchmarkName":"astyanaxBatchInsert", "seedNode":"internalIPOfSeedNodeInSameZone", "parameter": {"batchSize":"100", "rowCount": "100000"}}' http://127.0.0.1:8080/scenario/execute
