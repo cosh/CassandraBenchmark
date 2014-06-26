@@ -9,7 +9,7 @@
 	<artifactId>cassandra-benchmark</artifactId>
 	<name>Cassandra benchmark</name>
 	<description>Cassandra benchmark that is using the datastax driver</description>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 	<properties>
 		<main.basedir>${basedir}/../..</main.basedir>
 	</properties>
