@@ -30,6 +30,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * A simple REST controller that enables the user to execute certain benchmark scenarios
  */
@@ -65,7 +68,11 @@ public class BenchmarkScenarioController {
         Scenario scenario = scenarioPluginManager.tryGetScenario(context.getBenchmarkName());
 
         if (scenario != null) {
-            return new ResponseEntity<BenchmarkResult>(scenario.executeBenchmark(context), HttpStatus.OK);
+            final BenchmarkResult result = scenario.executeBenchmark(context);
+
+            result.setHostName(getHostName());
+
+            return new ResponseEntity<BenchmarkResult>(result, HttpStatus.OK);
         }
 
         log.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
@@ -95,7 +102,10 @@ public class BenchmarkScenarioController {
         Scenario scenario = scenarioPluginManager.tryGetScenario(context.getBenchmarkName());
 
         if (scenario != null) {
-            return new ResponseEntity<BenchmarkResult>(scenario.createDatamodel(context), HttpStatus.OK);
+            final BenchmarkResult result = scenario.createDatamodel(context);
+            result.setHostName(getHostName());
+
+            return new ResponseEntity<BenchmarkResult>(result, HttpStatus.OK);
         }
 
         log.error(String.format("Benchmark with name %s not available.", context.getBenchmarkName()));
@@ -118,5 +128,16 @@ public class BenchmarkScenarioController {
             context.setClusterName(Constants.defaultClusterName);
             log.info(String.format("Set default cluster name to default(%s)", Constants.defaultClusterName));
         }
+    }
+
+    private static String getHostName()
+    {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            log.error(e);
+        }
+
+        return "Unknown";
     }
 }

@@ -11,8 +11,6 @@ import cassandra.benchmark.service.internal.scenario.CreationContext;
 import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
-import com.datastax.driver.core.ResultSet;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
@@ -24,10 +22,8 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -120,8 +116,6 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
             logger.info(String.format("Finished with starting %d async batches. Waiting for a reply...", numberOfBatches));
 
-            final List<OperationResult<Void>> resultSets = new ArrayList<OperationResult<Void>>();
-
             boolean done = false;
 
             while(!done)
@@ -160,7 +154,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
             super.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, null);
     }
 
     synchronized

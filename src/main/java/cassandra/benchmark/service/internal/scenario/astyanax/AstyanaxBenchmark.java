@@ -26,6 +26,9 @@ import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by cosh on 02.06.14.
  */
@@ -217,6 +220,8 @@ public abstract class AstyanaxBenchmark {
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
 
+        List<String> errors = new ArrayList<String>();
+
         try {
             Long[] measures = new Long[2];
 
@@ -233,6 +238,7 @@ public abstract class AstyanaxBenchmark {
                         .build());
             } catch (ConnectionException e) {
                 log.error(e);
+                errors.add(e.getMessage());
             }
 
             long measure2 = System.nanoTime() - startTime - measure1;
@@ -250,6 +256,6 @@ public abstract class AstyanaxBenchmark {
             teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, errors);
     }
 }

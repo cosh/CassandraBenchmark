@@ -4,6 +4,7 @@ import cassandra.benchmark.service.internal.Constants;
 import cassandra.benchmark.service.internal.helper.SampleOfLongs;
 import cassandra.benchmark.service.internal.helper.SimpleMath;
 import cassandra.benchmark.service.internal.helper.TimingInterval;
+import cassandra.benchmark.service.internal.helper.Transformer;
 import cassandra.benchmark.service.internal.model.CommunicationCV;
 import cassandra.benchmark.service.internal.model.IdentityBucketRK;
 import cassandra.benchmark.service.internal.model.Mutation;
@@ -17,10 +18,11 @@ import com.datastax.driver.core.ConsistencyLevel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -64,14 +66,20 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
         long startTime = System.nanoTime();
         TimingInterval ti = new TimingInterval(startTime);
+        List<String> errors = new ArrayList<String>(Constants.errorThreshold);
+
+        BenchmarkResult result = null;
 
         try {
 
             super.initializeForBenchMarkDefault(context);
 
             final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
-            final Long[] measures = new Long[numberOfBatches];
+            final List<Long> measures = new ArrayList<Long>(numberOfBatches);
             final Random prng = new Random();
+
+            Long statementCounter = 0L;
+            Integer batchCount = 0;
 
             int currentColumnCount = 0;
 
@@ -98,7 +106,25 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                     currentColumnCount++;
                 }
 
-                measures[i] = executeBatch(preparedStatement, mutations);
+                try {
+                    batchCount++;
+                    measures.add(executeBatch(preparedStatement, mutations));
+                    statementCounter+=mutations.size();
+                }
+                catch (Exception e)
+                {
+                    logger.error(e);
+
+                    if(errors.size() < Constants.errorThreshold) {
+                        errors.add(e.getMessage());
+                    }
+                    else
+                    {
+                        errors.add(e.getMessage());
+                        logger.error("Skipping benchmark because of too many errors.");
+                        break;
+                    }
+                }
 
                 if(i%100 == 0 && i!=0) {
                     logger.info(String.format("Executed batch %d/%d.", i + 100, numberOfBatches));
@@ -107,14 +133,19 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
 
             long endTime = System.nanoTime();
 
-            SampleOfLongs measurements = new SampleOfLongs(measures, 1);
+            final Long[] samples = Transformer.transform(measures);
+            SampleOfLongs measurements = new SampleOfLongs(samples, 1);
 
-            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getSum(measures), numberOfBatches, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(samples), 0, 0, statementCounter, SimpleMath.getSum(samples), batchCount, measurements);
+
+
+            result = new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, errors);
+
         } finally {
             super.teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
+        return result;
     }
 
     private long executeBatch(final com.datastax.driver.core.PreparedStatement preparedStatement, final List<Mutation> mutations) {

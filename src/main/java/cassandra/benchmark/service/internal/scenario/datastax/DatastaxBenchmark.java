@@ -14,6 +14,9 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by cosh on 02.06.14.
  */
@@ -26,6 +29,7 @@ public abstract class DatastaxBenchmark {
     protected static Cluster connect(final String node, final int port, final String clusterName) {
         final Cluster cluster = Cluster.builder()
                 .addContactPoint(node)
+                .withPort(port)
                 .withClusterName(clusterName)
                 .withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
                 .build();
@@ -122,6 +126,6 @@ public abstract class DatastaxBenchmark {
             teardown();
         }
 
-        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime);
+        return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, null);
     }
 }

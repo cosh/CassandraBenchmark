@@ -1,32 +1,43 @@
 package cassandra.benchmark.transfer;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created by cosh on 12.05.14.
  */
 public class BenchmarkResult {
 
     private final long startTime;
-    private final long totalOps;
+    private final long totalCassandraClientCalls;
     private final long totalStatements;
-    private final double ops_rate;
-    private final double statements_rate;
-    private final double meanlatency;
-    private final double medianlatency;
-    private final double ninetyFiveTh;
-    private final double ninetyNineTh;
-    private final double elapsed;
+    private final double clientCallsPerSecond;
+    private final double statementsPerSecond;
+    private final double meanlatency_clientCall;
+    private final double medianlatency_clientCall;
+    private final double ninetyFiveTh_clientCall;
+    private final double ninetyNineTh_clientCall;
+    private final double elapsed_ms;
+    private String benchmarkHostName;
+    private final List<String> errors;
+    private Map<String, String> additionalInformation;
 
-    public BenchmarkResult(long totalOps, long totalStatements, double ops_rate, double statements_rate, double meanlatency, double medianlatency, double ninetyFiveTh, double ninetyNineTh, double elapsed, long startTime) {
-        this.totalOps = totalOps;
+
+    public BenchmarkResult(long totalCassandraClientCalls, long totalStatements, double clientCallsPerSecond, double statementsPerSecond, double meanlatency_clientCall, double medianlatency_clientCall, double ninetyFiveTh_clientCall, double ninetyNineTh_clientCall, double elapsed_ms, long startTime, List<String> errors) {
+        this.totalCassandraClientCalls = totalCassandraClientCalls;
         this.totalStatements = totalStatements;
-        this.ops_rate = ops_rate;
-        this.statements_rate = statements_rate;
-        this.meanlatency = meanlatency;
-        this.medianlatency = medianlatency;
-        this.ninetyFiveTh = ninetyFiveTh;
-        this.ninetyNineTh = ninetyNineTh;
-        this.elapsed = elapsed;
+        this.clientCallsPerSecond = clientCallsPerSecond;
+        this.statementsPerSecond = statementsPerSecond;
+        this.meanlatency_clientCall = meanlatency_clientCall;
+        this.medianlatency_clientCall = medianlatency_clientCall;
+        this.ninetyFiveTh_clientCall = ninetyFiveTh_clientCall;
+        this.ninetyNineTh_clientCall = ninetyNineTh_clientCall;
+        this.elapsed_ms = elapsed_ms;
         this.startTime = startTime;
+        this.errors = errors;
+        additionalInformation = null;
+        benchmarkHostName = null;
     }
 
     /**
@@ -34,8 +45,8 @@ public class BenchmarkResult {
      *
      * @return The total number of operations
      */
-    public long getTotalOps() {
-        return totalOps;
+    public long getTotalCassandraClientCalls() {
+        return totalCassandraClientCalls;
     }
 
     /**
@@ -43,8 +54,8 @@ public class BenchmarkResult {
      *
      * @return Operations per second
      */
-    public double getOps_rate() {
-        return ops_rate;
+    public double getClientCallsPerSecond() {
+        return clientCallsPerSecond;
     }
 
     /**
@@ -52,8 +63,8 @@ public class BenchmarkResult {
      *
      * @return Statements per second
      */
-    public double getStatements_rate() {
-        return statements_rate;
+    public double getStatementsPerSecond() {
+        return statementsPerSecond;
     }
 
     /**
@@ -61,8 +72,8 @@ public class BenchmarkResult {
      *
      * @return Mean latency
      */
-    public double getMeanlatency() {
-        return meanlatency;
+    public double getMeanlatency_clientCall() {
+        return meanlatency_clientCall;
     }
 
     /**
@@ -70,8 +81,8 @@ public class BenchmarkResult {
      *
      * @return The media latency
      */
-    public double getMedianlatency() {
-        return medianlatency;
+    public double getMedianlatency_clientCall() {
+        return medianlatency_clientCall;
     }
 
     /**
@@ -79,8 +90,8 @@ public class BenchmarkResult {
      *
      * @return The 95th percentile
      */
-    public double getNinetyFiveTh() {
-        return ninetyFiveTh;
+    public double getNinetyFiveTh_clientCall() {
+        return ninetyFiveTh_clientCall;
     }
 
     /**
@@ -88,8 +99,8 @@ public class BenchmarkResult {
      *
      * @return The 99th percentile
      */
-    public double getNinetyNineTh() {
-        return ninetyNineTh;
+    public double getNinetyNineTh_clientCall() {
+        return ninetyNineTh_clientCall;
     }
 
     /**
@@ -97,8 +108,8 @@ public class BenchmarkResult {
      *
      * @return Elapsed time in ms
      */
-    public double getElapsed() {
-        return elapsed;
+    public double getElapsed_ms() {
+        return elapsed_ms;
     }
 
     /**
@@ -108,5 +119,44 @@ public class BenchmarkResult {
      */
     public long getTotalStatements() {
         return totalStatements;
+    }
+
+    /**
+     * The start time as timestamp
+     * @return The start time
+     */
+    public long getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * List of errors
+     * @return Errors
+     */
+    public List<String> getErrors() {
+        return errors;
+    }
+
+    /**
+     * Additional information about the result of the benchmark
+     * @return A map of K/V pairs
+     */
+    public Map<String, String> getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void addAdditionalInformation(final String key, final String value)
+    {
+        if(this.additionalInformation == null) additionalInformation = new HashMap<String, String>();
+
+        this.additionalInformation.put(key, value);
+    }
+
+    public void setHostName(final String hostName) {
+        this.benchmarkHostName = hostName;
+    }
+
+    public String getBenchmarkHostName() {
+        return benchmarkHostName;
     }
 }
