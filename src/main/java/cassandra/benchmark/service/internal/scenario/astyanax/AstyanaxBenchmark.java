@@ -66,12 +66,14 @@ public abstract class AstyanaxBenchmark {
 
     protected void initializeCluster(final ExecutionContext context, final String keyspaceName) {
         this.astyanaxContext = initializeContext(context, keyspaceName);
-        this.astyanaxContext.start();
-        this.cluster = astyanaxContext.getClient();
+        if(this.astyanaxContext != null) {
+            this.astyanaxContext.start();
+            this.cluster = astyanaxContext.getClient();
+        }
     }
 
     public void teardown() {
-        astyanaxContext.shutdown();
+        if(astyanaxContext != null) astyanaxContext.shutdown();
         cluster = null;
         keyspace = null;
     }

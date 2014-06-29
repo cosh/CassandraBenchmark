@@ -76,8 +76,8 @@ public abstract class DatastaxBenchmark {
     }
 
     protected void teardown() {
-        session.close();
-        cluster.close();
+        if(session != null) session.close();
+        if(cluster != null) cluster.close();
     }
 
     protected BenchmarkResult createDataModel(final CreationContext context) {
