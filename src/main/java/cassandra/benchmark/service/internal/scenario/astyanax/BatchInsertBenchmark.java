@@ -13,6 +13,7 @@ import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.ConsistencyLevel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -97,6 +98,10 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
                 }
 
                 measures[i] = executeBatch(mutations);
+
+                if(i%100 == 0 && i!=0) {
+                    logger.info(String.format("Executed batch %d/%d.", i + 100, numberOfBatches));
+                }
             }
 
             long endTime = System.nanoTime();
@@ -114,7 +119,10 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
     private long executeBatch(final List<Mutation> mutations) {
         long startTime = System.nanoTime();
 
-        MutationBatch batch = super.keyspace.prepareMutationBatch();
+        MutationBatch batch = super.keyspace
+                .prepareMutationBatch()
+                .withAtomicBatch(false)
+                .withConsistencyLevel(ConsistencyLevel.CL_ONE);
 
         for (Mutation aMutation : mutations) {
             batch.withRow(model, aMutation.getIdentity())
@@ -128,8 +136,6 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         }
 
         long timeSpan = (System.nanoTime() - startTime);
-
-        logger.info(String.format("Inserted %d statements in one batch in %d ms.", mutations.size(), TimeUnit.MILLISECONDS.convert(timeSpan, TimeUnit.NANOSECONDS)));
 
         return timeSpan;
     }

@@ -13,6 +13,7 @@ import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -98,6 +99,10 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                 }
 
                 measures[i] = executeBatch(preparedStatement, mutations);
+
+                if(i%100 == 0 && i!=0) {
+                    logger.info(String.format("Executed batch %d/%d.", i + 100, numberOfBatches));
+                }
             }
 
             long endTime = System.nanoTime();
@@ -115,7 +120,9 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     private long executeBatch(final com.datastax.driver.core.PreparedStatement preparedStatement, final List<Mutation> mutations) {
         long startTime = System.nanoTime();
 
-        BatchStatement bs = new BatchStatement();
+        BatchStatement bs = new BatchStatement(BatchStatement.Type.UNLOGGED);
+
+        bs.setConsistencyLevel(ConsistencyLevel.ONE);
 
         for (Mutation aMutation : mutations) {
             BoundStatement statement = createInsertStatement(aMutation, preparedStatement);
@@ -125,8 +132,6 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
         super.session.execute(bs);
 
         long timeSpan = (System.nanoTime() - startTime);
-
-        logger.info(String.format("Inserted %d statements in one batch in %d ms.", mutations.size(), TimeUnit.MILLISECONDS.convert(timeSpan, TimeUnit.NANOSECONDS)));
 
         return timeSpan;
     }

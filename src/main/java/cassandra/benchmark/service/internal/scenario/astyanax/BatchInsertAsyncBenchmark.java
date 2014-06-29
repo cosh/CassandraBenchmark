@@ -11,11 +11,13 @@ import cassandra.benchmark.service.internal.scenario.CreationContext;
 import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
+import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.ConsistencyLevel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -90,6 +92,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
             for (int i = 0; i < numberOfBatches; i++) {
 
+
                 List<Mutation> mutations = new ArrayList<Mutation>(batchSize);
                 while (mutations.size() < batchSize) {
 
@@ -109,11 +112,39 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
                 if (operationResultListenableFuture != null) {
                     queries.add(operationResultListenableFuture);
                 }
+
+                if(i%100 == 0 && i!=0) {
+                    logger.info(String.format("Started async batch %d/%d.", i + 100, numberOfBatches));
+                }
             }
 
-            ListenableFuture<List<OperationResult<Void>>> successfulQueries = Futures.successfulAsList(queries);
-            final List<OperationResult<Void>> operationResults = successfulQueries.get();
-            //so the work is done and we can get the measures;
+            logger.info(String.format("Finished with starting %d async batches. Waiting for a reply...", numberOfBatches));
+
+            final List<OperationResult<Void>> resultSets = new ArrayList<OperationResult<Void>>();
+
+            boolean done = false;
+
+            while(!done)
+            {
+                Thread.sleep(1000);
+                boolean internalDone = true;
+
+                for (ListenableFuture<OperationResult<Void>> aFuture : queries)
+                {
+                    if(!aFuture.isDone())
+                    {
+                        logger.info("A future is not yet finished. Relooping...");
+                        internalDone = false;
+                        break;
+                    }
+                }
+
+                if (internalDone)
+                {
+                    logger.info("All futures are finished.");
+                    done = true;
+                }
+            }
 
             long endTime = System.nanoTime();
 
@@ -124,9 +155,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
             ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getSum(measures), numberOfBatches, measurements);
         } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+            log.error(e);
         } finally {
             super.teardown();
         }
@@ -137,13 +166,15 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
     synchronized
     private void addBatchResult(final long duration) {
         this.listOfAsyncBatchRequestDuration.add(duration);
-        logger.info(String.format("Inserted one async batch in %d ms.", TimeUnit.MILLISECONDS.convert(duration, TimeUnit.NANOSECONDS)));
     }
 
     private ListenableFuture<OperationResult<Void>> executeBatch(final List<Mutation> mutations) {
         final long startTime = System.nanoTime();
 
-        final MutationBatch batch = super.keyspace.prepareMutationBatch();
+        final MutationBatch batch = super.keyspace
+                .prepareMutationBatch()
+                .withAtomicBatch(false)
+                .withConsistencyLevel(ConsistencyLevel.CL_ONE);
 
         for (Mutation aMutation : mutations) {
             batch.withRow(model, aMutation.getIdentity())
@@ -153,14 +184,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
         try {
             final ListenableFuture<OperationResult<Void>> operationResultListenableFuture = batch.executeAsync();
 
-            operationResultListenableFuture.addListener(new Runnable() {
-                public void run() {
-
-                    long endTime = System.nanoTime();
-
-                    addBatchResult(endTime - startTime);
-                }
-            }, executorService);
+            operationResultListenableFuture.addListener(new OneShotTask(startTime), executorService);
 
         } catch (ConnectionException e) {
             logger.error("error inserting batch", e);
@@ -168,6 +192,16 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
 
         return null;
     }
+
+    class OneShotTask implements Runnable {
+        private final long startTime;
+        OneShotTask(final long s) { startTime = s; }
+        public void run() {
+
+            addBatchResult(System.nanoTime() - startTime);
+        }
+    }
+
 
     private void exctractParameter(final ExecutionContext context) {
         if (context.getParameter() == null) return;

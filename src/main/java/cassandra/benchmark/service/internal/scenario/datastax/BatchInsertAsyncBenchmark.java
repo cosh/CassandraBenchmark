@@ -12,6 +12,7 @@ import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.datastax.driver.core.*;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.logging.Log;
@@ -37,7 +38,7 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
 
     private static String name = "datastaxBatchInsertAsync";
     private final List<Long> listOfAsyncBatchRequestDuration = new ArrayList<Long>();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     private Integer wideRowCount = Constants.defaultColumnCount;
     private Long numberOfRows = Constants.defaultRowCount;
@@ -102,25 +103,49 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
                 }
 
                 queries.add(executeBatch(preparedStatement, mutations));
+
+                if(i%100 == 0 && i!=0) {
+                    logger.info(String.format("Started async batch %d/%d.", i + 100, numberOfBatches));
+                }
             }
 
-            ListenableFuture<List<ResultSet>> successfulQueries = Futures.successfulAsList(queries);
+            logger.info(String.format("Finished with starting %d async batches. Waiting for a reply...", numberOfBatches));
 
-            final List<ResultSet> resultSets = successfulQueries.get();
-            //so the work is done and we can get the measures;
+            boolean done = false;
+
+            while(!done)
+            {
+                Thread.sleep(1000);
+                boolean internalDone = true;
+
+                for (ListenableFuture<ResultSet> aFuture : queries)
+                {
+                    if(!aFuture.isDone())
+                    {
+                        logger.info("A future is not yet finished. Relooping...");
+                        internalDone = false;
+                        break;
+                    }
+                }
+
+                if (internalDone)
+                {
+                    logger.info("All futures are finished.");
+                    done = true;
+                }
+            }
 
             long endTime = System.nanoTime();
 
             Long[] measures = new Long[this.listOfAsyncBatchRequestDuration.size()];
             this.listOfAsyncBatchRequestDuration.toArray(measures); // fill the array
 
+            executorService.shutdownNow();
 
             SampleOfLongs measurements = new SampleOfLongs(measures, 1);
 
             ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(measures), 0, 0, numberOfRows * wideRowCount, SimpleMath.getSum(measures), numberOfBatches, measurements);
         } catch (InterruptedException e) {
-            logger.error(e);
-        } catch (ExecutionException e) {
             logger.error(e);
         } finally {
             super.teardown();
@@ -132,21 +157,25 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     private ListenableFuture<ResultSet> executeBatch(final PreparedStatement preparedStatement, final List<Mutation> mutations) {
         final long startTime = System.nanoTime();
 
-        BatchStatement bs = new BatchStatement();
+        BatchStatement bs = new BatchStatement(BatchStatement.Type.UNLOGGED);
+        bs.setConsistencyLevel(ConsistencyLevel.ONE);
 
         for (Mutation aMutation : mutations) {
             BoundStatement statement = createInsertStatement(aMutation, preparedStatement);
             bs.add(statement);
         }
 
-        final ResultSetFuture resultSetFuture = super.session.executeAsync(bs);
+        ResultSetFuture resultSetFuture = super.session.executeAsync(bs);
+        Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
+            @Override
+            public void onSuccess(final ResultSet result) {
+                addBatchResult(System.nanoTime() - startTime);
+            }
 
-        resultSetFuture.addListener(new Runnable() {
-            public void run() {
-
-                long endTime = System.nanoTime();
-
-                addBatchResult(endTime - startTime);
+            @Override
+            public void onFailure(final Throwable t) {
+                // Could do better I suppose
+                logger.error("Error during request: " + t);
             }
         }, executorService);
 
