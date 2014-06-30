@@ -28,7 +28,7 @@ public abstract class DatastaxBenchmark {
 
     protected static Cluster connect(final String node, final int port, final String clusterName) {
         final Cluster cluster = Cluster.builder()
-                .addContactPoint(node)
+                .addContactPoints(node.split(","))
                 .withPort(port)
                 .withClusterName(clusterName)
                 .withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
