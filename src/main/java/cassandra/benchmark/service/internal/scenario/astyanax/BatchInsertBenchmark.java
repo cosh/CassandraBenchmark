@@ -134,7 +134,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
                 }
             }
 
-            logger.info(String.format("batch execs %d", measures.size()));
+            logger.info(String.format("batch execs %d, future execs %d", measures.size(), counter));
 
             long endTime = System.nanoTime();
 
