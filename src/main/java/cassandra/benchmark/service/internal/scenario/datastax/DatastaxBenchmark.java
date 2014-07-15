@@ -11,6 +11,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -31,8 +32,9 @@ public abstract class DatastaxBenchmark {
                 .addContactPoints(node.split(","))
                 .withPort(port)
                 .withClusterName(clusterName)
-                .withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
-                .build();
+                //.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
+                .withLoadBalancingPolicy(new RoundRobinPolicy())
+                 .build();
         final Metadata metadata = cluster.getMetadata();
         logger.info(String.format("Connected to cluster: %s\n",
                 metadata.getClusterName()));

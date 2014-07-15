@@ -151,8 +151,8 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
                 .withConsistencyLevel(ConsistencyLevel.CL_ONE);
 
         for (Mutation aMutation : mutations) {
-            batch.withRow(model, aMutation.getIdentity())
-                    .putColumn(aMutation.getTimeStamp(), aMutation.getCommunication(), valueSerializer, 0);
+            batch.withRow(DefaultModel.model, aMutation.getIdentity())
+                    .putColumn(aMutation.getTimeStamp(), aMutation.getCommunication(), DefaultModel.valueSerializer, 0);
         }
 
         try {

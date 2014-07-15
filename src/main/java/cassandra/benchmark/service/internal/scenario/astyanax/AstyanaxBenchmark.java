@@ -33,15 +33,7 @@ import java.util.List;
  * Created by cosh on 02.06.14.
  */
 public abstract class AstyanaxBenchmark {
-    protected final static AnnotatedCompositeSerializer<IdentityBucketRK> identityBucketSerializer = new AnnotatedCompositeSerializer<IdentityBucketRK>(
-            IdentityBucketRK.class);
-    protected static final com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long> model =
-            new com.netflix.astyanax.model.ColumnFamily<IdentityBucketRK, Long>(
-                    Constants.tableNameThrift,
-                    identityBucketSerializer,
-                    new LongSerializer());
-    protected final static AnnotatedCompositeSerializer<CommunicationCV> valueSerializer = new AnnotatedCompositeSerializer<CommunicationCV>(
-            CommunicationCV.class);
+
     static Log log = LogFactory.getLog(AstyanaxBenchmark.class.getName());
 
     /**
@@ -56,7 +48,7 @@ public abstract class AstyanaxBenchmark {
      * This object tracks the context of an astyanax instance of either a Cluster or Keyspace
      */
     protected AstyanaxContext<Cluster> astyanaxContext;
-    private int initConnectionsPerHost = 10;
+    private int initConnectionsPerHost = 3;
     private int maxConnectionsPerHost = 3;
     /**
      * Major cassandra version compatibility
@@ -203,7 +195,7 @@ public abstract class AstyanaxBenchmark {
                         .setMaxConnsPerHost(maxConnectionsPerHost)
                         .setSeeds(context.getSeedNode());
 
-        poolConfig.setLatencyScoreStrategy(scoreStrategy); // Enabled SMA. Omit this to use round robin with a token
+        //poolConfig.setLatencyScoreStrategy(scoreStrategy); // Enabled SMA. Omit this to use round robin with a token
         // range
 
         return new AstyanaxContext.Builder()
@@ -233,7 +225,7 @@ public abstract class AstyanaxBenchmark {
             log.info(String.format("Created the keyspace %s with replication factor %s.", Constants.keyspaceName, context.getReplicatioFactor()));
 
             try {
-                keyspace.createColumnFamily(model, ImmutableMap.<String, Object>builder()
+                keyspace.createColumnFamily(DefaultModel.model, ImmutableMap.<String, Object>builder()
                         .put("default_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.DoubleType)")
                         .put("key_validation_class", "CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.IntegerType)")
                         .put("comparator_type", "LongType")
