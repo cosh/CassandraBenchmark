@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.createRandomIdentity;
 import static cassandra.benchmark.service.internal.helper.DataGenerator.getARandomBucket;
@@ -22,7 +23,7 @@ import static cassandra.benchmark.service.internal.helper.DataGenerator.getARand
 /**
  * Created by cosh on 15.07.14.
  */
-public class BatchRunnable implements Runnable {
+public class BatchRunnable implements Callable<PartialResult> {
 
     static Log logger = LogFactory.getLog(BatchRunnable.class.getName());
 
@@ -31,18 +32,17 @@ public class BatchRunnable implements Runnable {
     private final int wideRowCount;
     private final Keyspace keyspace;
 
-    private final PartialResult result;
-
     public BatchRunnable(int numberOfBatches, int batchSize, int wideRowCount, Keyspace keyspace) {
         this.numberOfBatches = numberOfBatches;
         this.batchSize = batchSize;
         this.wideRowCount = wideRowCount;
         this.keyspace = keyspace;
-        result = new PartialResult();
     }
 
     @Override
-    public void run() {
+    public PartialResult call() {
+
+        final PartialResult result = new PartialResult();
 
         final Random prng = new Random();
 
@@ -82,11 +82,9 @@ public class BatchRunnable implements Runnable {
                     break;
                 }
             }
-
-            if(i%100 == 0 && i!=0) {
-                logger.info(String.format("Executed batch %d/%d.", i + 100, numberOfBatches));
-            }
         }
+
+        return result;
     }
 
     private long executeBatch(final List<Mutation> mutations) throws ConnectionException {

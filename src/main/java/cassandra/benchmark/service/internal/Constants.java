@@ -20,4 +20,5 @@ public class Constants {
     public static Long defaultRowCount = 10000L;
     public static Integer defaultColumnCount = 100;
     public static Integer errorThreshold = 10;
+    public static Integer batchesPerThread = 100;
 }

@@ -1,27 +1,20 @@
 package cassandra.benchmark.service.internal.scenario.astyanax;
 
 import cassandra.benchmark.service.internal.Constants;
-import cassandra.benchmark.service.internal.helper.SampleOfLongs;
-import cassandra.benchmark.service.internal.helper.SimpleMath;
-import cassandra.benchmark.service.internal.helper.TimingInterval;
-import cassandra.benchmark.service.internal.helper.Transformer;
-import cassandra.benchmark.service.internal.model.CommunicationCV;
-import cassandra.benchmark.service.internal.model.IdentityBucketRK;
-import cassandra.benchmark.service.internal.model.Mutation;
+import cassandra.benchmark.service.internal.helper.*;
 import cassandra.benchmark.service.internal.scenario.CreationContext;
 import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
-import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.connectionpool.NodeDiscovery;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.ConsistencyLevel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -65,76 +58,98 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         logger.info(String.format("Executing astyanax batch insert benchmark with the following parameters rowCount:%d, wideRowCount:%d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
 
         long startTime = System.nanoTime();
-        TimingInterval ti = new TimingInterval(startTime);
         List<String> errors = new ArrayList<String>(Constants.errorThreshold);
 
+        int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
+        if(numberOfBatches == 0)
+        {
+            errors.add("Number of batches is 0");
+            return new BenchmarkResult(0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, startTime, errors);
+        }
+
+        TimingInterval ti;
         BenchmarkResult result = null;
 
         try {
 
             super.initializeForBenchMarkDefault(context);
 
-            final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
+            int counter = 0;
+
+            int cores = Runtime.getRuntime().availableProcessors();
+            int fixedThreadSize = cores * 2;
+            int parallelFutureCount = (fixedThreadSize * 3) / 2;
+            logger.info(String.format("Cores %d, threadPoolSize %d, parallelFutureCount %d", cores, fixedThreadSize, parallelFutureCount));
+
+            ExecutorService executor = Executors.newFixedThreadPool(fixedThreadSize);
+
             final List<Long> measures = new ArrayList<Long>(numberOfBatches);
-            final Random prng = new Random();
 
-            int currentColumnCount = 0;
-            Long statementCounter = 0L;
-            Integer batchCount = 0;
+            boolean done = false;
 
-            Integer currentBucket = getARandomBucket(prng);
+            while (!done)
+            {
+                List<FutureTask<PartialResult>> futureTasks = new ArrayList<FutureTask<PartialResult>>(parallelFutureCount);
 
-            IdentityBucketRK identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
+                for (int i = 0; i < parallelFutureCount; i++) {
 
-            for (int i = 0; i < numberOfBatches; i++) {
+                    int localBatchCount = numberOfBatches < Constants.batchesPerThread  ? numberOfBatches : Constants.batchesPerThread;
+                    numberOfBatches -= localBatchCount;
 
-                List<Mutation> mutations = new ArrayList<Mutation>(batchSize);
-                while (mutations.size() < batchSize) {
+                    if(localBatchCount != 0)
+                    {
+                        final BatchRunnable runnable = new BatchRunnable(localBatchCount, batchSize, wideRowCount, super.keyspace);
 
-                    if (currentColumnCount < wideRowCount) {
-                        //same identity
-                    } else {
-                        currentBucket = getARandomBucket(prng);
-                        identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
-                        currentColumnCount = 0;
-                    }
+                        FutureTask<PartialResult> task = new FutureTask<PartialResult>(runnable);
+                        executor.execute(task);
 
-                    mutations.add(new Mutation(identity, prng.nextLong(), new CommunicationCV(identity.getIdentity(), "some static bParty", 23.5)));
-                    currentColumnCount++;
-                }
-
-                try {
-                    batchCount++;
-                    measures.add(executeBatch(mutations));
-                    statementCounter+=mutations.size();
-                } catch (ConnectionException e) {
-                    logger.error(e);
-
-                    if(errors.size() < Constants.errorThreshold) {
-                        errors.add(e.getMessage());
+                        futureTasks.add(task);
                     }
                     else
                     {
-                        errors.add(e.getMessage());
-                        logger.error("Skipping benchmark because of too many errors.");
-                        break;
+                        done = true;
                     }
+
                 }
 
-                if(i%100 == 0 && i!=0) {
-                    logger.info(String.format("Executed batch %d/%d.", i + 100, numberOfBatches));
+                for (FutureTask<PartialResult> aFuture : futureTasks) {
+
+                    counter++;
+
+                    final PartialResult partialResult = aFuture.get();
+
+                    measures.addAll(partialResult.getMeasures());
+                    errors.addAll(partialResult.getErrors());
+
+                    if (counter % 100 == 0 && counter != 0) {
+                        logger.info(String.format("Execution %d", counter));
+                    }
+
+                    if (errors.size() > Constants.errorThreshold) {
+                        {
+                            logger.error("Skipping benchmark because of too many errors.");
+                            break;
+                        }
+                    }
                 }
             }
+
+            logger.info(String.format("batch execs %d", measures.size()));
 
             long endTime = System.nanoTime();
 
             final Long[] samples = Transformer.transform(measures);
             SampleOfLongs measurements = new SampleOfLongs(samples, 1);
 
-            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(samples), 0, 0, statementCounter, SimpleMath.getSum(samples), batchCount, measurements);
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(samples), 0, 0, measures.size() * batchSize, SimpleMath.getSum(samples), measures.size(), measurements);
 
             result = new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, errors);
 
+
+        } catch (InterruptedException e) {
+            logger.error(e);
+        } catch (ExecutionException e) {
+            logger.error(e);
         } finally {
             super.teardown();
         }
@@ -142,50 +157,22 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         return result;
     }
 
-    private long executeBatch(final List<Mutation> mutations) throws ConnectionException {
-        long startTime = System.nanoTime();
-
-        MutationBatch batch = super.keyspace
-                .prepareMutationBatch()
-                .withAtomicBatch(false)
-                .withConsistencyLevel(ConsistencyLevel.CL_ONE);
-
-        for (Mutation aMutation : mutations) {
-            batch.withRow(DefaultModel.model, aMutation.getIdentity())
-                    .putColumn(aMutation.getTimeStamp(), aMutation.getCommunication(), DefaultModel.valueSerializer, 0);
-        }
-
-        try {
-            batch.execute();
-        } catch (ConnectionException e) {
-            logger.error("error inserting batch", e);
-            throw e;
-        }
-
-        long timeSpan = (System.nanoTime() - startTime);
-
-        return timeSpan;
-    }
-
     private void exctractParameter(final ExecutionContext context) {
         if (context.getParameter() == null) return;
 
         final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
-        if(extractedWideRowCount != null)
-        {
+        if (extractedWideRowCount != null) {
             this.wideRowCount = extractedWideRowCount;
 
         }
 
         final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
-        if(extractedNumberOfRows != null)
-        {
+        if (extractedNumberOfRows != null) {
             this.numberOfRows = extractedNumberOfRows;
         }
 
         Integer extractedBatchSize = extractBatchSize(context.getParameter());
-        if(extractedBatchSize != null)
-        {
+        if (extractedBatchSize != null) {
             this.batchSize = extractedBatchSize;
         }
     }
