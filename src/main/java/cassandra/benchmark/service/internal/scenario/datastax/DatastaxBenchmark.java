@@ -38,6 +38,10 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractBatchSize;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractColumnCountPerRow;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractnumberOfRowsCount;
+
 /**
  * Created by cosh on 02.06.14.
  */
@@ -47,13 +51,17 @@ public abstract class DatastaxBenchmark {
     protected Cluster cluster;
     protected Session session;
 
+    protected Integer wideRowCount = Constants.defaultColumnCount;
+    protected Long numberOfRows = Constants.defaultRowCount;
+    protected Integer batchSize = Constants.defaultBatchSize;
+
     protected static Cluster connect(final String node, final int port, final String clusterName) {
         final Cluster cluster = Cluster.builder()
                 .addContactPoints(node.split(","))
                 .withPort(port)
                 .withClusterName(clusterName)
-                //.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
-                .withLoadBalancingPolicy(new RoundRobinPolicy())
+                .withLoadBalancingPolicy(new DCAwareRoundRobinPolicy()) //uses the DC of the seed node it connects to!! So one needs to give it the right seed
+                //.withLoadBalancingPolicy(new RoundRobinPolicy())
                  .build();
         final Metadata metadata = cluster.getMetadata();
         logger.info(String.format("Connected to cluster: %s\n",
@@ -149,5 +157,28 @@ public abstract class DatastaxBenchmark {
         }
 
         return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, null);
+    }
+
+    protected void exctractParameter(final ExecutionContext context) {
+        if (context.getParameter() == null) return;
+
+        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
+        if(extractedWideRowCount != null)
+        {
+            this.wideRowCount = extractedWideRowCount;
+
+        }
+
+        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
+        if(extractedNumberOfRows != null)
+        {
+            this.numberOfRows = extractedNumberOfRows;
+        }
+
+        Integer extractedBatchSize = extractBatchSize(context.getParameter());
+        if(extractedBatchSize != null)
+        {
+            this.batchSize = extractedBatchSize;
+        }
     }
 }

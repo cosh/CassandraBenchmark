@@ -59,10 +59,6 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
     private final List<Long> listOfAsyncBatchRequestDuration = new ArrayList<Long>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-    private Integer wideRowCount = Constants.defaultColumnCount;
-    private Long numberOfRows = Constants.defaultRowCount;
-    private Integer batchSize = Constants.defaultBatchSize;
-
     @Override
     public String getName() {
         return name;
@@ -230,28 +226,5 @@ public class BatchInsertAsyncBenchmark extends DatastaxBenchmark implements Scen
                 "duration ) " +
                 "VALUES (" +
                 "?,?,?,?,?,?,?);");
-    }
-
-    private void exctractParameter(final ExecutionContext context) {
-        if (context.getParameter() == null) return;
-
-        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
-        if(extractedWideRowCount != null)
-        {
-            this.wideRowCount = extractedWideRowCount;
-
-        }
-
-        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
-        if(extractedNumberOfRows != null)
-        {
-            this.numberOfRows = extractedNumberOfRows;
-        }
-
-        Integer extractedBatchSize = extractBatchSize(context.getParameter());
-        if(extractedBatchSize != null)
-        {
-            this.batchSize = extractedBatchSize;
-        }
     }
 }

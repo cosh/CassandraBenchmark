@@ -61,8 +61,8 @@ public abstract class AstyanaxBenchmark {
      * This object tracks the context of an astyanax instance of either a Cluster or Keyspace
      */
     protected AstyanaxContext<Keyspace> astyanaxContext;
-    private int initConnectionsPerHost = 5;
-    private int maxConnectionsPerHost = 10;
+    private int initConnectionsPerHost = 2;
+    private int maxConnectionsPerHost = 20;
     /**
      * Major cassandra version compatibility
      */
@@ -142,8 +142,7 @@ public abstract class AstyanaxBenchmark {
                         .setMaxConnsPerHost(maxConnectionsPerHost)
                         .setSeeds(context.getSeedNode());
 
-        //poolConfig.setLatencyScoreStrategy(scoreStrategy); // Enabled SMA. Omit this to use round robin with a token
-        // range
+        poolConfig.setLatencyScoreStrategy(scoreStrategy); // Enabled SMA. Omit this to use round robin with a token
 
         return new AstyanaxContext.Builder()
                 .forCluster(context.getClusterName())

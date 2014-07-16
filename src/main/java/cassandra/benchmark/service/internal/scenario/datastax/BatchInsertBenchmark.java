@@ -21,10 +21,7 @@
 package cassandra.benchmark.service.internal.scenario.datastax;
 
 import cassandra.benchmark.service.internal.Constants;
-import cassandra.benchmark.service.internal.helper.SampleOfLongs;
-import cassandra.benchmark.service.internal.helper.SimpleMath;
-import cassandra.benchmark.service.internal.helper.TimingInterval;
-import cassandra.benchmark.service.internal.helper.Transformer;
+import cassandra.benchmark.service.internal.helper.*;
 import cassandra.benchmark.service.internal.model.CommunicationCV;
 import cassandra.benchmark.service.internal.model.IdentityBucketRK;
 import cassandra.benchmark.service.internal.model.Mutation;
@@ -38,11 +35,13 @@ import com.datastax.driver.core.ConsistencyLevel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import static cassandra.benchmark.service.internal.helper.DataGenerator.*;
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
@@ -55,9 +54,6 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
     static Log logger = LogFactory.getLog(BatchInsertBenchmark.class.getName());
 
     private static String name = "datastaxBatchInsert";
-    private Integer wideRowCount = Constants.defaultColumnCount;
-    private Long numberOfRows = Constants.defaultRowCount;
-    private Integer batchSize = Constants.defaultBatchSize;
 
     @Override
     public String getName() {
@@ -85,118 +81,104 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
         logger.info(String.format("Executing datastax batch insert benchmark with the following parameters rowCount:%d, wideRowCount:%d, batchSize:%d", numberOfRows, wideRowCount, batchSize));
 
         long startTime = System.nanoTime();
-        TimingInterval ti = new TimingInterval(startTime);
         List<String> errors = new ArrayList<String>(Constants.errorThreshold);
 
+        int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
+        if(numberOfBatches == 0)
+        {
+            errors.add("Number of batches is 0");
+            return new BenchmarkResult(0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, startTime, errors);
+        }
+
+        TimingInterval ti;
         BenchmarkResult result = null;
 
         try {
 
             super.initializeForBenchMarkDefault(context);
 
-            final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
-            final List<Long> measures = new ArrayList<Long>(numberOfBatches);
-            final Random prng = new Random();
+            int counter = 0;
 
-            Long statementCounter = 0L;
-            Integer batchCount = 0;
+            int cores = Runtime.getRuntime().availableProcessors();
+            int fixedThreadSize = cores * 2;
+            int parallelFutureCount = (fixedThreadSize * 3) / 2;
+            logger.info(String.format("Cores %d, threadPoolSize %d, parallelFutureCount %d", cores, fixedThreadSize, parallelFutureCount));
 
-            int currentColumnCount = 0;
-
-            Integer currentBucket = getARandomBucket(prng);
-
+            final ExecutorService executor = Executors.newFixedThreadPool(fixedThreadSize);
             final com.datastax.driver.core.PreparedStatement preparedStatement = createPreparedStatement();
 
-            IdentityBucketRK identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
+            final List<Long> measures = new ArrayList<Long>(numberOfBatches);
 
-            for (int i = 0; i < numberOfBatches; i++) {
+            boolean done = false;
 
-                List<Mutation> mutations = new ArrayList<Mutation>(batchSize);
-                while (mutations.size() < batchSize) {
+            while (!done)
+            {
+                List<FutureTask<PartialResult>> futureTasks = new ArrayList<FutureTask<PartialResult>>(parallelFutureCount);
 
-                    if (currentColumnCount < wideRowCount) {
-                        //same identity
-                    } else {
-                        currentBucket = getARandomBucket(prng);
-                        identity = new IdentityBucketRK(createRandomIdentity(prng), currentBucket);
-                        currentColumnCount = 0;
-                    }
+                for (int i = 0; i < parallelFutureCount; i++) {
 
-                    mutations.add(new Mutation(identity, prng.nextLong(), new CommunicationCV(identity.getIdentity(), "some static bParty", 23.5)));
-                    currentColumnCount++;
-                }
+                    int localBatchCount = numberOfBatches < Constants.batchesPerThread  ? numberOfBatches : Constants.batchesPerThread;
+                    numberOfBatches -= localBatchCount;
 
-                try {
-                    batchCount++;
-                    measures.add(executeBatch(preparedStatement, mutations));
-                    statementCounter+=mutations.size();
-                }
-                catch (Exception e)
-                {
-                    logger.error(e);
+                    if(localBatchCount != 0)
+                    {
+                        final BatchRunnable runnable = new BatchRunnable(localBatchCount, batchSize, wideRowCount, super.session, preparedStatement);
 
-                    if(errors.size() < Constants.errorThreshold) {
-                        errors.add(e.getMessage());
+                        FutureTask<PartialResult> task = new FutureTask<PartialResult>(runnable);
+                        executor.execute(task);
+
+                        futureTasks.add(task);
                     }
                     else
                     {
-                        errors.add(e.getMessage());
-                        logger.error("Skipping benchmark because of too many errors.");
-                        break;
+                        done = true;
                     }
+
                 }
 
-                if(i%100 == 0 && i!=0) {
-                    logger.info(String.format("Executed batch %d/%d.", i + 100, numberOfBatches));
+                for (FutureTask<PartialResult> aFuture : futureTasks) {
+
+                    counter++;
+
+                    final PartialResult partialResult = aFuture.get();
+
+                    measures.addAll(partialResult.getMeasures());
+                    errors.addAll(partialResult.getErrors());
+
+                    if (counter % 100 == 0 && counter != 0) {
+                        logger.info(String.format("Execution %d", counter));
+                    }
+
+                    if (errors.size() > Constants.errorThreshold) {
+                        {
+                            logger.error("Skipping benchmark because of too many errors.");
+                            break;
+                        }
+                    }
                 }
             }
+
+            logger.info(String.format("batch execs %d, future execs %d", measures.size(), counter));
 
             long endTime = System.nanoTime();
 
             final Long[] samples = Transformer.transform(measures);
             SampleOfLongs measurements = new SampleOfLongs(samples, 1);
 
-            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(samples), 0, 0, statementCounter, SimpleMath.getSum(samples), batchCount, measurements);
-
+            ti = new TimingInterval(startTime, endTime, SimpleMath.getMax(samples), 0, 0, measures.size() * batchSize, SimpleMath.getSum(samples), measures.size(), measurements);
 
             result = new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, errors);
 
+
+        } catch (InterruptedException e) {
+            logger.error(e);
+        } catch (ExecutionException e) {
+            logger.error(e);
         } finally {
             super.teardown();
         }
 
         return result;
-    }
-
-    private long executeBatch(final com.datastax.driver.core.PreparedStatement preparedStatement, final List<Mutation> mutations) {
-        long startTime = System.nanoTime();
-
-        BatchStatement bs = new BatchStatement(BatchStatement.Type.UNLOGGED);
-
-        bs.setConsistencyLevel(ConsistencyLevel.ONE);
-
-        for (Mutation aMutation : mutations) {
-            BoundStatement statement = createInsertStatement(aMutation, preparedStatement);
-            bs.add(statement);
-        }
-
-        super.session.execute(bs);
-
-        long timeSpan = (System.nanoTime() - startTime);
-
-        return timeSpan;
-    }
-
-    private BoundStatement createInsertStatement(final Mutation mutation, final com.datastax.driver.core.PreparedStatement preparedStatement) {
-
-        return preparedStatement.bind(
-                mutation.getIdentity().getIdentity(),
-                mutation.getIdentity().getBucket(),
-                mutation.getTimeStamp(),
-                mutation.getCommunication().getaPartyImsi(),
-                mutation.getCommunication().getaPartyImei(),
-                mutation.getCommunication().getbParty(),
-                mutation.getCommunication().getDuration());
     }
 
     private com.datastax.driver.core.PreparedStatement createPreparedStatement() {
@@ -210,28 +192,5 @@ public class BatchInsertBenchmark extends DatastaxBenchmark implements Scenario 
                 "duration ) " +
                 "VALUES (" +
                 "?,?,?,?,?,?,?);");
-    }
-
-    private void exctractParameter(final ExecutionContext context) {
-        if (context.getParameter() == null) return;
-
-        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
-        if(extractedWideRowCount != null)
-        {
-            this.wideRowCount = extractedWideRowCount;
-
-        }
-
-        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
-        if(extractedNumberOfRows != null)
-        {
-            this.numberOfRows = extractedNumberOfRows;
-        }
-
-        Integer extractedBatchSize = extractBatchSize(context.getParameter());
-        if(extractedBatchSize != null)
-        {
-            this.batchSize = extractedBatchSize;
-        }
     }
 }
