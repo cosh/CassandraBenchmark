@@ -49,12 +49,20 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractBatchSize;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractColumnCountPerRow;
+import static cassandra.benchmark.service.internal.helper.ParameterParser.extractnumberOfRowsCount;
+
 /**
  * Created by cosh on 02.06.14.
  */
 public abstract class AstyanaxBenchmark {
 
     static Log log = LogFactory.getLog(AstyanaxBenchmark.class.getName());
+
+    protected Integer wideRowCount = Constants.defaultColumnCount;
+    protected Long numberOfRows = Constants.defaultRowCount;
+    protected Integer batchSize = Constants.defaultBatchSize;
 
     /**
      * cluster object
@@ -271,5 +279,25 @@ public abstract class AstyanaxBenchmark {
         }
 
         return new BenchmarkResult(ti.operationCount, ti.keyCount, ti.realOpRate(), ti.keyRate(), ti.meanLatency(), ti.medianLatency(), ti.rankLatency(0.95f), ti.rankLatency(0.99f), ti.runTime(), startTime, errors);
+    }
+
+    protected void exctractParameter(final ExecutionContext context) {
+        if (context.getParameter() == null) return;
+
+        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
+        if (extractedWideRowCount != null) {
+            this.wideRowCount = extractedWideRowCount;
+
+        }
+
+        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
+        if (extractedNumberOfRows != null) {
+            this.numberOfRows = extractedNumberOfRows;
+        }
+
+        Integer extractedBatchSize = extractBatchSize(context.getParameter());
+        if (extractedBatchSize != null) {
+            this.batchSize = extractedBatchSize;
+        }
     }
 }

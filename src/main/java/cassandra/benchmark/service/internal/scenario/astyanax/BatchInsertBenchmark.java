@@ -48,10 +48,6 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
 
     private static String name = "astyanaxBatchInsert";
 
-    private Integer wideRowCount = Constants.defaultColumnCount;
-    private Long numberOfRows = Constants.defaultRowCount;
-    private Integer batchSize = Constants.defaultBatchSize;
-
     @Override
     public String getName() {
         return name;
@@ -175,25 +171,5 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         }
 
         return result;
-    }
-
-    private void exctractParameter(final ExecutionContext context) {
-        if (context.getParameter() == null) return;
-
-        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
-        if (extractedWideRowCount != null) {
-            this.wideRowCount = extractedWideRowCount;
-
-        }
-
-        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
-        if (extractedNumberOfRows != null) {
-            this.numberOfRows = extractedNumberOfRows;
-        }
-
-        Integer extractedBatchSize = extractBatchSize(context.getParameter());
-        if (extractedBatchSize != null) {
-            this.batchSize = extractedBatchSize;
-        }
     }
 }

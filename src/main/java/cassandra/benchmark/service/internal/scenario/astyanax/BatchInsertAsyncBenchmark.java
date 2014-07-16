@@ -215,29 +215,4 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
             addBatchResult(System.nanoTime() - startTime);
         }
     }
-
-
-    private void exctractParameter(final ExecutionContext context) {
-        if (context.getParameter() == null) return;
-
-        final Integer extractedWideRowCount = extractColumnCountPerRow(context.getParameter());
-        if(extractedWideRowCount != null)
-        {
-            this.wideRowCount = extractedWideRowCount;
-
-        }
-
-        final Long extractedNumberOfRows = extractnumberOfRowsCount(context.getParameter());
-        if(extractedNumberOfRows != null)
-        {
-            this.numberOfRows = extractedNumberOfRows;
-        }
-
-        Integer extractedBatchSize = extractBatchSize(context.getParameter());
-        if(extractedBatchSize != null)
-        {
-            this.batchSize = extractedBatchSize;
-        }
-    }
-
 }
