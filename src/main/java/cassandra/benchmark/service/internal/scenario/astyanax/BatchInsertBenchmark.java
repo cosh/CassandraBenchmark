@@ -26,6 +26,7 @@ import cassandra.benchmark.service.internal.scenario.CreationContext;
 import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
+import com.netflix.astyanax.Keyspace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -89,6 +90,8 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
         try {
 
             super.initializeForBenchMarkDefault(context);
+            final Keyspace keyspace = super.getKeyspace();
+
 
             int counter = 0;
 
@@ -97,7 +100,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
             int parallelFutureCount = (fixedThreadSize * 3) / 2;
             logger.info(String.format("Cores %d, threadPoolSize %d, parallelFutureCount %d", cores, fixedThreadSize, parallelFutureCount));
 
-            ExecutorService executor = Executors.newFixedThreadPool(fixedThreadSize);
+            final ExecutorService executor = Executors.newFixedThreadPool(fixedThreadSize);
 
             final List<Long> measures = new ArrayList<Long>(numberOfBatches);
 
@@ -114,7 +117,7 @@ public class BatchInsertBenchmark extends AstyanaxBenchmark implements Scenario 
 
                     if(localBatchCount != 0)
                     {
-                        final BatchRunnable runnable = new BatchRunnable(localBatchCount, batchSize, wideRowCount, super.keyspace);
+                        final BatchRunnable runnable = new BatchRunnable(localBatchCount, batchSize, wideRowCount, keyspace);
 
                         FutureTask<PartialResult> task = new FutureTask<PartialResult>(runnable);
                         executor.execute(task);

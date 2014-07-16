@@ -9,7 +9,7 @@
 	<artifactId>cassandra-benchmark</artifactId>
 	<name>Cassandra benchmark</name>
 	<description>Cassandra benchmark that is using the datastax driver</description>
-    <version>0.0.9-SNAPSHOT</version>
+    <version>0.0.9</version>
 	<properties>
 		<main.basedir>${basedir}/../..</main.basedir>
 	</properties>
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>com.netflix.astyanax</groupId>
             <artifactId>astyanax</artifactId>
-            <version>1.56.48</version>
+            <version>1.56.49</version>
         </dependency>
     </dependencies>
 	<build>

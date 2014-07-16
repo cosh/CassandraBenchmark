@@ -32,6 +32,7 @@ import cassandra.benchmark.service.internal.scenario.ExecutionContext;
 import cassandra.benchmark.service.internal.scenario.Scenario;
 import cassandra.benchmark.transfer.BenchmarkResult;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -94,6 +95,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
         try {
 
             super.initializeForBenchMarkDefault(context);
+            final Keyspace keyspace = super.getKeyspace();
 
             final int numberOfBatches = getNumberOfBatches(this.numberOfRows, this.wideRowCount, this.batchSize);
             final Random prng = new Random();
@@ -124,7 +126,7 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
                     currentColumnCount++;
                 }
 
-                final ListenableFuture<OperationResult<Void>> operationResultListenableFuture = executeBatch(mutations);
+                final ListenableFuture<OperationResult<Void>> operationResultListenableFuture = executeBatch(mutations, keyspace);
                 if (operationResultListenableFuture != null) {
                     queries.add(operationResultListenableFuture);
                 }
@@ -182,10 +184,10 @@ public class BatchInsertAsyncBenchmark extends AstyanaxBenchmark implements Scen
         this.listOfAsyncBatchRequestDuration.add(duration);
     }
 
-    private ListenableFuture<OperationResult<Void>> executeBatch(final List<Mutation> mutations) {
+    private ListenableFuture<OperationResult<Void>> executeBatch(final List<Mutation> mutations, final Keyspace keyspace) {
         final long startTime = System.nanoTime();
 
-        final MutationBatch batch = super.keyspace
+        final MutationBatch batch = keyspace
                 .prepareMutationBatch()
                 .withAtomicBatch(false)
                 .withConsistencyLevel(ConsistencyLevel.CL_ONE);
