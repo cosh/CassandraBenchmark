@@ -40,9 +40,7 @@ import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import static cassandra.benchmark.service.internal.helper.ParameterParser.*;
 
@@ -134,7 +132,7 @@ public abstract class AstyanaxBenchmark {
         );
 
         final ConnectionPoolConfigurationImpl poolConfig =
-                new ConnectionPoolConfigurationImpl("CassandraConnectionPool")
+                new ConnectionPoolConfigurationImpl("CassPool"+ UUID.randomUUID().toString().subSequence(0, 6))
                         .setPort(context.getPort())
                         .setSocketTimeout(ConnectionPoolConfigurationImpl.DEFAULT_SOCKET_TIMEOUT)
                         .setInitConnsPerHost(initConnectionsPerHost) //--> might be the reason for the too many open files
